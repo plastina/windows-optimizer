@@ -47,3 +47,5 @@ jobs:
             publish/*.exe
             publish/*.sha256
           generate_release_notes: true
+          # Tags like v0.1.0-rc1 are published as pre-releases.
+          prerelease: ${{ contains(github.ref_name, '-') }}
