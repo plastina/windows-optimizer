@@ -10,7 +10,7 @@ public sealed class RegistryTweakTests : IDisposable
     public void Dispose() => _env.Dispose();
 
     private RegistryTweak Create(params RegistryEdit[] edits) =>
-        new(_env.Context, "test-tweak", "Teste", "Descrição", TweakCategory.Gaming, RiskLevel.Low, edits);
+        new(_env.Context, "test-tweak", "Test", "Description", TweakCategory.Gaming, RiskLevel.Low, edits);
 
     [Fact]
     public void Apply_writes_every_value_and_reports_applied()
@@ -121,6 +121,6 @@ public sealed class RegistryTweakTests : IDisposable
         var lines = tweak.Preview();
 
         Assert.Equal(new PreviewLine("A", "7", "1", @"HKCU\" + Key), lines[0]);
-        Assert.Equal(new PreviewLine("B", "(ausente)", "\"x\"", @"HKCU\" + Key), lines[1]);
+        Assert.Equal(new PreviewLine("B", "(not set)","\"x\"", @"HKCU\" + Key), lines[1]);
     }
 }

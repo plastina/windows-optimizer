@@ -38,13 +38,13 @@ public sealed class TweakViewModel : ObservableObject
 
     public string RiskText => Risk switch
     {
-        RiskLevel.High => "Risco alto",
-        RiskLevel.Medium => "Risco médio",
-        _ => "Risco baixo",
+        RiskLevel.High => "High risk",
+        RiskLevel.Medium => "Medium risk",
+        _ => "Low risk",
     };
 
     public bool IsOneShot => _tweak.Kind == TweakKind.OneShot;
-    public string ApplyLabel => IsOneShot ? "Executar" : "Aplicar";
+    public string ApplyLabel => IsOneShot ? "Run" : "Apply";
 
     /// <summary>Undo only appears when there is a backup to go back to, so rows don't carry a dead button.</summary>
     public bool ShowUndo => _canUndo;
@@ -60,9 +60,9 @@ public sealed class TweakViewModel : ObservableObject
 
     public string StatusText => Status switch
     {
-        TweakStatus.Applied => "Aplicado",
-        TweakStatus.Partial => "Aplicado em parte",
-        TweakStatus.NotApplied => "Não aplicado",
+        TweakStatus.Applied => "Applied",
+        TweakStatus.Partial => "Partly applied",
+        TweakStatus.NotApplied => "Not applied",
         _ => "",
     };
 
@@ -124,7 +124,7 @@ public sealed class TweakViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            _main.Engine.Write($"Não foi possível ler o estado de '{Name}': {ex.Message}");
+            _main.Engine.Write($"Could not read the state of '{Name}': {ex.Message}");
             return (TweakStatus.Unknown, false);
         }
     }
@@ -140,7 +140,7 @@ public sealed class TweakViewModel : ObservableObject
     private async Task ApplyAsync()
     {
         if (HasWarning &&
-            MessageBox.Show($"{Warning}\n\nContinuar?", Name, MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No)
+            MessageBox.Show($"{Warning}\n\nContinue?", Name, MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No)
             != MessageBoxResult.Yes)
         {
             return;
@@ -190,7 +190,7 @@ public sealed class TweakViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            _main.Engine.Write($"Não foi possível listar as alterações de '{Name}': {ex.Message}");
+            _main.Engine.Write($"Could not list the changes of '{Name}': {ex.Message}");
             lines = Array.Empty<PreviewLine>();
         }
 
@@ -205,6 +205,6 @@ public sealed class TweakViewModel : ObservableObject
         ResultIsError = !result.Success;
         ResultText = result.Message.Length > 0
             ? result.Message
-            : result.Success ? "Pronto." : "Falhou.";
+            : result.Success ? "Done." : "Failed.";
     }
 }

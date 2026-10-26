@@ -109,7 +109,7 @@
             </Setter>
         </Style>
 
-        <!-- Text-only toggle used for "Ver o que muda" and "Registro". -->
+        <!-- Text-only toggle used for "See what changes" and "Log". -->
         <Style x:Key="LinkToggle" TargetType="ToggleButton">
             <Setter Property="Foreground" Value="{StaticResource InkBrush}"/>
             <Setter Property="FontFamily" Value="{StaticResource BodyFont}"/>

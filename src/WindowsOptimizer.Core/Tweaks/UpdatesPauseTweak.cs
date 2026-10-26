@@ -11,8 +11,8 @@ public sealed class UpdatesPauseTweak : RegistryTweak
     private static readonly string[] Services = { "wuauserv", "UsoSvc", "BITS", "DoSvc" };
 
     public UpdatesPauseTweak(TweakContext ctx)
-        : base(ctx, "updates-pause-auto", "Pausar atualizações automáticas",
-            "Desliga o download e a instalação automáticos do Windows Update e deixa os serviços de atualização em início manual. Você continua podendo atualizar quando quiser.",
+        : base(ctx, "updates-pause-auto", "Pause automatic updates",
+            "Turns off automatic Windows Update downloads and installs and sets the update services to manual start. You can still update whenever you want.",
             TweakCategory.Updates, RiskLevel.High,
             Reg.LmDword(AutoUpdatePolicy, "NoAutoUpdate", 1),
             Reg.LmDword(AutoUpdatePolicy, "AUOptions", 2))
@@ -29,8 +29,8 @@ public sealed class UpdatesPauseTweak : RegistryTweak
     {
         var failed = Services.Where(s => !Ctx.Runner.Run("sc.exe", $"config {s} start= demand").Success).ToList();
         return failed.Count == 0
-            ? "Atualizações automáticas pausadas. Reinicie o PC para concluir."
-            : "Atualizações pausadas, mas estes serviços não puderam ser ajustados: " + string.Join(", ", failed);
+            ? "Automatic updates paused. Restart the PC to finish."
+            : "Updates paused, but these services could not be adjusted: " + string.Join(", ", failed);
     }
 
     protected override string? OnUndoing(TweakSnapshot snapshot)
@@ -39,7 +39,7 @@ public sealed class UpdatesPauseTweak : RegistryTweak
         {
             if (mode.Length > 0) Ctx.Runner.Run("sc.exe", $"config {key["service:".Length..]} start= {mode}");
         }
-        return "Atualizações automáticas restauradas. Reinicie o PC para concluir.";
+        return "Automatic updates restored. Restart the PC to finish.";
     }
 
     /// <summary>Reads the start mode in the vocabulary of <c>sc config</c>.</summary>

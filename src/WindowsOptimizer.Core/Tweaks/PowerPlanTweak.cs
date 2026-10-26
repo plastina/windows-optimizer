@@ -13,6 +13,7 @@ public sealed class PowerPlanTweak : TweakBase
     private const string HighPerformance = "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c";
 
     private static readonly Regex GuidPattern = new(@"[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}");
+    // Matches the English and Brazilian Portuguese names of the plan ("Ultimate Performance", "Desempenho Máximo").
     private static readonly Regex MaxPlanName = new("Ultimate|Máxim|Maxim", RegexOptions.IgnoreCase);
     private static readonly Regex HexValue = new("0x[0-9a-fA-F]{8}");
 
@@ -26,8 +27,8 @@ public sealed class PowerPlanTweak : TweakBase
     };
 
     public PowerPlanTweak(TweakContext ctx)
-        : base(ctx, "power-plan-max", "Plano de energia Desempenho Máximo",
-            "Ativa o plano de maior desempenho e impede que tela, suspensão e hibernação desliguem o PC enquanto ele está na tomada.",
+        : base(ctx, "power-plan-max", "Ultimate Performance power plan",
+            "Turns on the highest-performance plan and keeps the screen, sleep and hibernation from turning the PC off while it is plugged in.",
             TweakCategory.Power, RiskLevel.Low)
     {
     }
@@ -41,15 +42,15 @@ public sealed class PowerPlanTweak : TweakBase
 
     public override IReadOnlyList<PreviewLine> Preview() => new[]
     {
-        new PreviewLine("Plano de energia ativo", GetActive()?.Name ?? "—", "Desempenho Máximo"),
-        new PreviewLine("Desligar tela, suspender e hibernar (na tomada)", "—", "Nunca"),
-        new PreviewLine("Bloqueio automático do console", "—", "Desativado"),
+        new PreviewLine("Active power plan", GetActive()?.Name ?? "—", "Ultimate Performance"),
+        new PreviewLine("Turn off screen, sleep and hibernate (plugged in)", "—", "Never"),
+        new PreviewLine("Automatic console lock", "—", "Off"),
     };
 
     public override TweakResult Apply()
     {
         var active = GetActive();
-        if (active is null) return TweakResult.Fail("Não foi possível ler o plano de energia ativo.");
+        if (active is null) return TweakResult.Fail("Could not read the active power plan.");
 
         var snapshot = Ctx.State.Load(Id) ?? new TweakSnapshot { TweakId = Id };
         snapshot.Data.TryAdd("previousScheme", active.Value.Guid);
@@ -88,14 +89,14 @@ public sealed class PowerPlanTweak : TweakBase
         Run($"/setactive {target}");
 
         return errors.Count == 0
-            ? TweakResult.Ok("Plano de máximo desempenho ativado.")
+            ? TweakResult.Ok("Maximum performance plan turned on.")
             : TweakResult.Fail(string.Join(Environment.NewLine, errors));
     }
 
     public override TweakResult Undo()
     {
         var snapshot = Ctx.State.Load(Id);
-        if (snapshot is null) return TweakResult.Fail("Não há backup deste ajuste; o app não o aplicou.");
+        if (snapshot is null) return TweakResult.Fail("No backup for this tweak; the app did not apply it.");
 
         snapshot.Data.TryGetValue("targetScheme", out var target);
         snapshot.Data.TryGetValue("previousScheme", out var previous);
@@ -120,7 +121,7 @@ public sealed class PowerPlanTweak : TweakBase
             Ctx.Runner.Run("powercfg", $"/delete {target}");
 
         Ctx.State.Delete(Id);
-        return TweakResult.Ok("Plano de energia anterior restaurado.");
+        return TweakResult.Ok("Previous power plan restored.");
     }
 
     private (string Guid, string Name)? GetActive()

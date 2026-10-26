@@ -50,7 +50,7 @@ public sealed class CommandRunner : ICommandRunner
         }
 
         using var process = Process.Start(info)
-            ?? throw new InvalidOperationException($"Não foi possível iniciar {fileName}.");
+            ?? throw new InvalidOperationException($"Could not start {fileName}.");
 
         // Read both streams while waiting so a chatty process can't block on a full pipe.
         var stdout = process.StandardOutput.ReadToEndAsync();
@@ -59,7 +59,7 @@ public sealed class CommandRunner : ICommandRunner
         if (!process.WaitForExit(timeoutMs))
         {
             try { process.Kill(entireProcessTree: true); } catch (InvalidOperationException) { }
-            return new CommandResult(-1, "", $"Tempo esgotado ao executar {fileName}.");
+            return new CommandResult(-1, "", $"Timed out running {fileName}.");
         }
 
         process.WaitForExit();

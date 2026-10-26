@@ -10,12 +10,14 @@ public sealed class DnsTweak : TweakBase
     private static readonly string[] Google6 = { "2001:4860:4860::8888", "2001:4860:4860::8844" };
 
     private static readonly Regex VirtualAdapter = new(
-        "Virtual|VMware|Hyper-V|VirtualBox|Loopback|TAP-|WireGuard|Bluetooth|Tunnel|Npcap|vEthernet",
+        // "Virtual" also catches the host's "Hyper-V Virtual Ethernet Adapter" but not the NIC a Hyper-V guest sees,
+        // which is "Microsoft Hyper-V Network Adapter" and is that machine's only real connection.
+        "Virtual|VMware|Loopback|TAP-|WireGuard|Bluetooth|Tunnel|Npcap|vEthernet",
         RegexOptions.IgnoreCase);
 
     public DnsTweak(TweakContext ctx)
-        : base(ctx, "dns-google", "DNS do Google",
-            "Usa 8.8.8.8 e 8.8.4.4 (e os equivalentes IPv6) nas placas de rede ativas. Pode melhorar a resolução de nomes, mas não reduz o ping dos jogos.",
+        : base(ctx, "dns-google", "Google DNS",
+            "Uses 8.8.8.8 and 8.8.4.4 (and the IPv6 equivalents) on the active network adapters. It can speed up name resolution but does not lower game ping.",
             TweakCategory.Network, RiskLevel.Low)
     {
     }
@@ -36,14 +38,14 @@ public sealed class DnsTweak : TweakBase
             .Select(a =>
             {
                 var current = ReadServers(a.Id, v6: false);
-                return new PreviewLine(a.Name, current.Length == 0 ? "automático (DHCP)" : current, string.Join(", ", Google4));
+                return new PreviewLine(a.Name, current.Length == 0 ? "automatic (DHCP)" : current, string.Join(", ", Google4));
             })
             .ToList();
 
     public override TweakResult Apply()
     {
         var adapters = ActiveAdapters();
-        if (adapters.Count == 0) return TweakResult.Fail("Nenhuma placa de rede ativa foi encontrada.");
+        if (adapters.Count == 0) return TweakResult.Fail("No active network adapter was found.");
 
         var snapshot = Ctx.State.Load(Id) ?? new TweakSnapshot { TweakId = Id };
         foreach (var adapter in adapters)
@@ -64,14 +66,14 @@ public sealed class DnsTweak : TweakBase
 
         Ctx.Runner.Run("ipconfig", "/flushdns");
         return errors.Count == 0
-            ? TweakResult.Ok($"DNS do Google aplicado em {adapters.Count} placa(s).")
+            ? TweakResult.Ok($"Google DNS applied on {adapters.Count} adapter(s).")
             : TweakResult.Fail(string.Join(Environment.NewLine, errors));
     }
 
     public override TweakResult Undo()
     {
         var snapshot = Ctx.State.Load(Id);
-        if (snapshot is null) return TweakResult.Fail("Não há backup deste ajuste; o app não o aplicou.");
+        if (snapshot is null) return TweakResult.Fail("No backup for this tweak; the app did not apply it.");
 
         var all = NetworkInterface.GetAllNetworkInterfaces();
         var errors = new List<string>();
@@ -90,7 +92,7 @@ public sealed class DnsTweak : TweakBase
         if (errors.Count > 0) return TweakResult.Fail(string.Join(Environment.NewLine, errors));
 
         Ctx.State.Delete(Id);
-        return TweakResult.Ok("DNS anterior restaurado.");
+        return TweakResult.Ok("Previous DNS restored.");
     }
 
     private List<NetworkInterface> ActiveAdapters() =>

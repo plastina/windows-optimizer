@@ -32,5 +32,5 @@ public abstract class TweakBase : ITweak
     public virtual bool CanUndo() => Ctx.State.Exists(Id);
     public virtual IReadOnlyList<PreviewLine> Preview() => Array.Empty<PreviewLine>();
     public abstract TweakResult Apply();
-    public virtual TweakResult Undo() => TweakResult.Fail("Este ajuste não pode ser desfeito pelo app.");
+    public virtual TweakResult Undo() => TweakResult.Fail("This tweak can't be undone by the app.");
 }

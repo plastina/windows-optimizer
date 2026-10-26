@@ -10,7 +10,7 @@
 
     <Window.Resources>
 
-        <!-- One tweak. The left edge is the state gauge; "Ver o que muda" opens a setup sheet. -->
+        <!-- One tweak. The left edge is the state gauge; "See what changes" opens a setup sheet. -->
         <DataTemplate DataType="{x:Type vm:TweakViewModel}">
             <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource LineBrush}"
                     BorderThickness="1" CornerRadius="5" Margin="0,0,0,10" ClipToBounds="True">
@@ -80,26 +80,26 @@
                                             </Style>
                                         </TextBlock.Style>
                                     </TextBlock>
-                                    <TextBlock Text="Exige reiniciar o PC" Style="{StaticResource MetaText}" Margin="16,0,0,0"
+                                    <TextBlock Text="Needs a PC restart" Style="{StaticResource MetaText}" Margin="16,0,0,0"
                                                Visibility="{Binding NeedsRestart, Converter={StaticResource BoolToVisibility}}"/>
                                 </StackPanel>
                             </StackPanel>
 
                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
-                                <Button Content="Desfazer" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0"
+                                <Button Content="Undo" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0"
                                         Command="{Binding UndoCommand}" IsEnabled="{Binding CanUndoNow}"
                                         Visibility="{Binding ShowUndo, Converter={StaticResource BoolToVisibility}}"
-                                        AutomationProperties.Name="{Binding Name, StringFormat=Desfazer: {0}}"/>
+                                        AutomationProperties.Name="{Binding Name, StringFormat=Undo: {0}}"/>
                                 <Button Content="{Binding ApplyLabel}" Style="{StaticResource PrimaryButton}"
                                         Command="{Binding ApplyCommand}" IsEnabled="{Binding CanApply}"
-                                        AutomationProperties.Name="{Binding Name, StringFormat=Aplicar: {0}}"/>
+                                        AutomationProperties.Name="{Binding Name, StringFormat=Apply: {0}}"/>
                             </StackPanel>
                         </Grid>
 
                         <TextBlock Text="{Binding Description}" TextWrapping="Wrap" MaxWidth="640" HorizontalAlignment="Left"
                                    Margin="0,10,0,0" LineHeight="19"/>
 
-                        <TextBlock Text="Já estava assim antes do app; não há backup para desfazer."
+                        <TextBlock Text="It was already like this before the app; there is no backup to undo."
                                    Style="{StaticResource MetaText}" Margin="0,8,0,0"
                                    Visibility="{Binding NoBackupNote, Converter={StaticResource BoolToVisibility}}"/>
 
@@ -107,7 +107,7 @@
                                    Margin="0,8,0,0" Foreground="{StaticResource PartialTextBrush}"
                                    Visibility="{Binding HasWarning, Converter={StaticResource BoolToVisibility}}"/>
 
-                        <ToggleButton Content="Ver o que muda" Style="{StaticResource LinkToggle}" HorizontalAlignment="Left"
+                        <ToggleButton Content="See what changes" Style="{StaticResource LinkToggle}" HorizontalAlignment="Left"
                                       Margin="-2,10,0,0" IsChecked="{Binding IsExpanded, Mode=TwoWay}"/>
 
                         <Border Margin="0,8,0,0" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="4"
@@ -120,10 +120,10 @@
                                         <ColumnDefinition Width="170"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="Item" Style="{StaticResource MetaText}" FontWeight="SemiBold" Margin="12,7"/>
-                                    <TextBlock Grid.Column="1" Text="Agora" Style="{StaticResource MetaText}" FontWeight="SemiBold" Margin="12,7"/>
-                                    <TextBlock Grid.Column="2" Text="Depois" Style="{StaticResource MetaText}" FontWeight="SemiBold" Margin="12,7"/>
+                                    <TextBlock Grid.Column="1" Text="Now" Style="{StaticResource MetaText}" FontWeight="SemiBold" Margin="12,7"/>
+                                    <TextBlock Grid.Column="2" Text="After" Style="{StaticResource MetaText}" FontWeight="SemiBold" Margin="12,7"/>
                                 </Grid>
-                                <TextBlock Text="Este ajuste executa uma ação; não há valores para listar."
+                                <TextBlock Text="This tweak runs an action; there are no values to list."
                                            Style="{StaticResource MetaText}" Margin="12,10"
                                            Visibility="{Binding PreviewEmpty, Converter={StaticResource BoolToVisibility}}"/>
                                 <ItemsControl ItemsSource="{Binding Preview}">
@@ -198,14 +198,14 @@
 
             <StackPanel Grid.Row="0" Margin="10,0,0,20">
                 <TextBlock Text="Windows Optimizer" FontFamily="{StaticResource DisplayFont}" FontSize="22"/>
-                <TextBlock Text="Cada ajuste separado, com desfazer." Style="{StaticResource MetaText}" Margin="0,2,0,0"
+                <TextBlock Text="Each tweak on its own, with undo." Style="{StaticResource MetaText}" Margin="0,2,0,0"
                            TextWrapping="Wrap"/>
             </StackPanel>
 
             <ListBox Grid.Row="1" ItemsSource="{Binding Categories}" SelectedItem="{Binding Selected, Mode=TwoWay}"
                      ItemContainerStyle="{StaticResource CategoryItem}" Background="Transparent" BorderThickness="0"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                     AutomationProperties.Name="Categorias">
+                     AutomationProperties.Name="Categories">
                 <ListBox.ItemTemplate>
                     <DataTemplate DataType="{x:Type vm:CategoryViewModel}">
                         <Grid>
@@ -223,9 +223,9 @@
 
             <StackPanel Grid.Row="2" Margin="10,12,0,0">
                 <CheckBox IsChecked="{Binding CreateRestorePoint}" Margin="0,0,0,12">
-                    <TextBlock Text="Criar ponto de restauração antes do primeiro ajuste" TextWrapping="Wrap"/>
+                    <TextBlock Text="Create a restore point before the first tweak" TextWrapping="Wrap"/>
                 </CheckBox>
-                <Button Content="Atualizar estados" Style="{StaticResource SecondaryButton}" Command="{Binding RefreshCommand}"
+                <Button Content="Refresh states" Style="{StaticResource SecondaryButton}" Command="{Binding RefreshCommand}"
                         HorizontalAlignment="Stretch"/>
             </StackPanel>
         </Grid>
@@ -242,7 +242,7 @@
                     BorderThickness="1" CornerRadius="5" Padding="14,10" Margin="0,0,0,16"
                     Visibility="{Binding ShowAdminBanner, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock TextWrapping="Wrap"
-                           Text="O app não está rodando como administrador. Ajustes que mudam o sistema vão falhar. Feche e abra de novo com &quot;Executar como administrador&quot;."/>
+                           Text="The app is not running as administrator. Tweaks that change the system will fail. Close it and open it again with &quot;Run as administrator&quot;."/>
             </Border>
 
             <StackPanel Grid.Row="1" Margin="0,0,0,18">
@@ -262,7 +262,7 @@
                  BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0" Padding="20,8"
                  VerticalScrollBarVisibility="Auto" TextChanged="OnLogChanged"
                  Visibility="{Binding ShowLog, Converter={StaticResource BoolToVisibility}}"
-                 AutomationProperties.Name="Registro de atividade"/>
+                 AutomationProperties.Name="Activity log"/>
 
         <Border Grid.Row="2" Grid.ColumnSpan="2" Background="{StaticResource SurfaceBrush}"
                 BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0" Padding="20,8">
@@ -274,9 +274,9 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="{Binding LastMessage}" Style="{StaticResource MetaText}" TextTrimming="CharacterEllipsis"
                            VerticalAlignment="Center"/>
-                <Button Grid.Column="1" Content="Abrir pasta de registros" Command="{Binding OpenLogFolderCommand}"
+                <Button Grid.Column="1" Content="Open logs folder" Command="{Binding OpenLogFolderCommand}"
                         Style="{StaticResource LinkButton}" Margin="0,0,16,0" VerticalAlignment="Center"/>
-                <ToggleButton Grid.Column="2" Content="Registro" Style="{StaticResource LinkToggle}"
+                <ToggleButton Grid.Column="2" Content="Log" Style="{StaticResource LinkToggle}"
                               IsChecked="{Binding ShowLog, Mode=TwoWay}" VerticalAlignment="Center"/>
             </Grid>
         </Border>

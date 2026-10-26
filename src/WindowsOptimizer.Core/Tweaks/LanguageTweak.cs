@@ -9,8 +9,8 @@ public sealed class LanguageTweak : TweakBase
     private const string Layout = "0409:00000409";
 
     public LanguageTweak(TweakContext ctx)
-        : base(ctx, "language-en-us", "Idioma e teclado em inglês (EUA)",
-            "Define idioma, região e formato como English (United States) com teclado US. Idiomas e teclados anteriores voltam ao desfazer, mas cada idioma volta com o teclado padrão dele.",
+        : base(ctx, "language-en-us", "English (US) language and keyboard",
+            "Sets language, region and format to English (United States) with a US keyboard. Previous languages and keyboards come back on undo, but each language returns with its default keyboard.",
             TweakCategory.Language, RiskLevel.Medium)
     {
     }
@@ -37,9 +37,9 @@ public sealed class LanguageTweak : TweakBase
     {
         return new[]
         {
-            new PreviewLine("Região e formato", CurrentLocale() ?? "—", "en-US"),
-            new PreviewLine("Idioma de exibição", "—", "en-US (baixa o pacote se faltar)"),
-            new PreviewLine("Teclado", "—", "US (" + Layout + ")"),
+            new PreviewLine("Region and format", CurrentLocale() ?? "—", "en-US"),
+            new PreviewLine("Display language", "—", "en-US (downloads the pack if missing)"),
+            new PreviewLine("Keyboard", "—", "US (" + Layout + ")"),
         };
     }
 
@@ -57,7 +57,7 @@ public sealed class LanguageTweak : TweakBase
                 }
                 $o | ConvertTo-Json -Compress
                 """);
-            if (!read.Success) return TweakResult.Fail("Não foi possível ler as configurações atuais de idioma: " + read.Text);
+            if (!read.Success) return TweakResult.Fail("Could not read the current language settings: " + read.Text);
 
             var snapshot = new TweakSnapshot { TweakId = Id };
             snapshot.Data["state"] = read.Output.Trim();
@@ -69,7 +69,7 @@ public sealed class LanguageTweak : TweakBase
             $note = ''
             if (Get-Command Install-Language -ErrorAction SilentlyContinue) {
                 try { Install-Language -Language en-US -CopyToSettings | Out-Null }
-                catch { $note = ' O pacote de idioma não foi instalado: ' + $_.Exception.Message }
+                catch { $note = ' The language pack was not installed: ' + $_.Exception.Message }
             }
             $list = New-WinUserLanguageList 'en-US'
             $list[0].InputMethodTips.Clear()
@@ -79,7 +79,7 @@ public sealed class LanguageTweak : TweakBase
             Set-WinUILanguageOverride -Language 'en-US'
             Set-Culture 'en-US'
             Set-WinSystemLocale 'en-US'
-            Write-Output ('Idioma en-US e teclado US configurados.' + $note)
+            Write-Output ('en-US language and US keyboard set.' + $note)
             """, timeoutMs: 900_000);
 
         return result.Success ? TweakResult.Ok(result.Output.Trim()) : TweakResult.Fail(result.Text);
@@ -89,7 +89,7 @@ public sealed class LanguageTweak : TweakBase
     {
         var snapshot = Ctx.State.Load(Id);
         if (snapshot is null || !snapshot.Data.TryGetValue("state", out var state))
-            return TweakResult.Fail("Não há backup deste ajuste; o app não o aplicou.");
+            return TweakResult.Fail("No backup for this tweak; the app did not apply it.");
 
         var json = state.Replace("'", "''");
         var result = Ctx.Runner.RunPowerShell($$"""
@@ -110,6 +110,6 @@ public sealed class LanguageTweak : TweakBase
         if (!result.Success) return TweakResult.Fail(result.Text);
 
         Ctx.State.Delete(Id);
-        return TweakResult.Ok("Idioma e região anteriores restaurados.");
+        return TweakResult.Ok("Previous language and region restored.");
     }
 }

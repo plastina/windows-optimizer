@@ -29,9 +29,9 @@ public sealed class TweakEngine
         return new TweakEngine(TweakCatalog.Create(context), Path.Combine(root, "windows-optimizer.log"));
     }
 
-    public TweakResult Apply(ITweak tweak) => Run(tweak, "Aplicando", tweak.Apply);
+    public TweakResult Apply(ITweak tweak) => Run(tweak, "Applying", tweak.Apply);
 
-    public TweakResult Undo(ITweak tweak) => Run(tweak, "Desfazendo", tweak.Undo);
+    public TweakResult Undo(ITweak tweak) => Run(tweak, "Undoing", tweak.Undo);
 
     public void Write(string message) => Log(message);
 
@@ -48,7 +48,7 @@ public sealed class TweakEngine
             result = TweakResult.Fail(ex.Message);
         }
 
-        Log($"{(result.Success ? "OK" : "Falhou")}: {tweak.Name}" + (result.Message.Length > 0 ? $" — {result.Message}" : ""));
+        Log($"{(result.Success ? "OK" : "Failed")}: {tweak.Name}" + (result.Message.Length > 0 ? $" — {result.Message}" : ""));
         return result;
     }
 

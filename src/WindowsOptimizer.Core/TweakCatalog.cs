@@ -11,29 +11,29 @@ public static class TweakCatalog
 
     public static IReadOnlyList<ITweak> Create(TweakContext c) => new ITweak[]
     {
-        // Atualizações
+        // Updates
         new UpdatesPauseTweak(c)
         {
             NeedsRestart = true,
-            Warning = "Sem atualizações automáticas o PC deixa de receber correções de segurança até você atualizar manualmente. Use Desfazer para voltar ao normal.",
+            Warning = "Without automatic updates the PC stops getting security fixes until you update it by hand. Use Undo to go back to normal.",
         },
-        new RegistryTweak(c, "updates-exclude-drivers", "Não instalar drivers pelo Windows Update",
-            "Impede que o Windows Update troque drivers de vídeo e de periféricos sem você pedir. Atualize os drivers pelo site do fabricante.",
+        new RegistryTweak(c, "updates-exclude-drivers", "Don't install drivers through Windows Update",
+            "Stops Windows Update from swapping graphics and peripheral drivers behind your back. Update drivers from the manufacturer's site instead.",
             TweakCategory.Updates, RiskLevel.Medium,
             Reg.LmDword(WindowsUpdatePolicy, "ExcludeWUDriversInQualityUpdate", 1),
             Reg.LmDword(@"SOFTWARE\Policies\Microsoft\Windows\DriverSearching", "SearchOrderConfig", 0),
             Reg.LmDword(@"SOFTWARE\Microsoft\Windows\CurrentVersion\DriverSearching", "SearchOrderConfig", 0)),
 
-        // Energia
+        // Power
         new PowerPlanTweak(c),
-        new RegistryTweak(c, "power-no-idle-lock", "Desativar protetor de tela e bloqueio por inatividade",
-            "Evita que o PC bloqueie ou ative o protetor de tela sozinho durante uma corrida ou transmissão.",
+        new RegistryTweak(c, "power-no-idle-lock", "Turn off screen saver and idle lock",
+            "Keeps the PC from locking or starting the screen saver on its own during a race or a stream.",
             TweakCategory.Power, RiskLevel.Low,
             Reg.CuString(@"Control Panel\Desktop", "ScreenSaveActive", "0"),
             Reg.CuString(@"Control Panel\Desktop", "ScreenSaverIsSecure", "0"),
             Reg.LmDword(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", "InactivityTimeoutSecs", 0)),
-        new RegistryTweak(c, "power-throttling-off", "Desativar limitação de energia de processos",
-            "Impede que o Windows reduza a velocidade de processos para economizar energia. Útil em PC de mesa.",
+        new RegistryTweak(c, "power-throttling-off", "Turn off power throttling",
+            "Stops Windows from slowing processes down to save power. Useful on a desktop PC.",
             TweakCategory.Power, RiskLevel.Low,
             Reg.LmDword(@"SYSTEM\CurrentControlSet\Control\Power\PowerThrottling", "PowerThrottlingOff", 1))
         {
@@ -41,27 +41,27 @@ public static class TweakCatalog
         },
         MaintenanceTweaks.HibernationOff(c),
 
-        // Jogos
-        new RegistryTweak(c, "game-mode-on", "Ativar o Modo de Jogo",
-            "Pede ao Windows que priorize o jogo em primeiro plano e adie tarefas de segundo plano.",
+        // Gaming
+        new RegistryTweak(c, "game-mode-on", "Turn on Game Mode",
+            "Asks Windows to prioritize the game in the foreground and postpone background tasks.",
             TweakCategory.Gaming, RiskLevel.Low,
             Reg.CuDword(@"Software\Microsoft\GameBar", "AutoGameModeEnabled", 1),
             Reg.CuDword(@"Software\Microsoft\GameBar", "AllowAutoGameMode", 1)),
-        new RegistryTweak(c, "game-dvr-off", "Desativar a gravação em segundo plano",
-            "Desliga o Game DVR, que grava os últimos minutos do jogo e consome disco e processador.",
+        new RegistryTweak(c, "game-dvr-off", "Turn off background recording",
+            "Disables Game DVR, which records the last minutes of gameplay and costs disk and CPU.",
             TweakCategory.Gaming, RiskLevel.Low,
             Reg.CuDword(@"System\GameConfigStore", "GameDVR_Enabled", 0),
             Reg.CuDword(@"Software\Microsoft\Windows\CurrentVersion\GameDVR", "AppCaptureEnabled", 0)),
         MaintenanceTweaks.RacingGtEvoAutostart(c),
 
-        // Aparência
-        new RegistryTweak(c, "dark-theme", "Tema escuro",
-            "Usa o tema escuro nos aplicativos e no sistema.",
+        // Appearance
+        new RegistryTweak(c, "dark-theme", "Dark theme",
+            "Uses the dark theme in apps and in the system.",
             TweakCategory.Appearance, RiskLevel.Low,
             Reg.CuDword(Personalize, "AppsUseLightTheme", 0),
             Reg.CuDword(Personalize, "SystemUsesLightTheme", 0)),
-        new RegistryTweak(c, "visual-effects-reduced", "Reduzir efeitos visuais e transparência",
-            "Escolhe o ajuste de melhor desempenho para os efeitos visuais e desliga animações da barra de tarefas e a transparência.",
+        new RegistryTweak(c, "visual-effects-reduced", "Reduce visual effects and transparency",
+            "Picks the best-performance setting for visual effects and turns off taskbar animations and transparency.",
             TweakCategory.Appearance, RiskLevel.Low,
             Reg.CuDword(@"Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects", "VisualFXSetting", 2),
             Reg.CuDword(ExplorerAdvanced, "TaskbarAnimations", 0),
@@ -69,12 +69,12 @@ public static class TweakCatalog
         {
             NeedsRestart = true,
         },
-        new RegistryTweak(c, "taskbar-chat-off", "Ocultar o Chat da barra de tarefas",
-            "Remove o ícone de Chat (Teams) da barra de tarefas.",
+        new RegistryTweak(c, "taskbar-chat-off", "Hide Chat from the taskbar",
+            "Removes the Chat (Teams) icon from the taskbar.",
             TweakCategory.Appearance, RiskLevel.Low,
             Reg.CuDword(ExplorerAdvanced, "TaskbarMn", 0)),
-        new RegistryTweak(c, "datetime-iso-24h", "Data AAAA-MM-DD e relógio de 24 horas",
-            "Mostra a data como 2017-04-05 e a hora como 14:30:00.",
+        new RegistryTweak(c, "datetime-iso-24h", "YYYY-MM-DD dates and 24-hour clock",
+            "Shows dates like 2017-04-05 and times like 14:30:00.",
             TweakCategory.Appearance, RiskLevel.Low,
             Reg.CuString(International, "sShortDate", "yyyy-MM-dd"),
             Reg.CuString(International, "sShortTime", "HH:mm"),
@@ -82,39 +82,39 @@ public static class TweakCatalog
         {
             NeedsRestart = true,
         },
-        new RegistryTweak(c, "start-pins-empty", "Esvaziar os itens fixados do Menu Iniciar",
-            "Aplica uma política que deixa a lista de itens fixados do Menu Iniciar vazia.",
+        new RegistryTweak(c, "start-pins-empty", "Empty the Start menu pins",
+            "Applies a policy that leaves the pinned list in the Start menu empty.",
             TweakCategory.Appearance, RiskLevel.Medium,
             Reg.LmString(@"SOFTWARE\Policies\Microsoft\Windows\Explorer", "ConfigureStartPins", """{"pinnedList":[]}"""))
         {
             NeedsRestart = true,
         },
-        new RegistryTweak(c, "lock-screen-off", "Pular a tela de bloqueio",
-            "Vai direto para a tela de login, sem a imagem de bloqueio.",
+        new RegistryTweak(c, "lock-screen-off", "Skip the lock screen",
+            "Goes straight to the sign-in screen, without the lock screen picture.",
             TweakCategory.Appearance, RiskLevel.Low,
             Reg.LmDword(@"SOFTWARE\Policies\Microsoft\Windows\Personalization", "NoLockScreen", 1)),
 
-        // Idioma e região
+        // Language and region
         new LanguageTweak(c)
         {
             NeedsRestart = true,
-            Warning = "Muda idioma, região e teclado do Windows. Se o pacote en-US não estiver instalado, o Windows o baixa e isso pode levar alguns minutos.",
+            Warning = "Changes the Windows language, region and keyboard. If the en-US language pack isn't installed, Windows downloads it, which can take a few minutes.",
         },
 
-        // Rede
+        // Network
         new DnsTweak(c),
 
-        // Limpeza e privacidade
-        new RegistryTweak(c, "suggestions-off", "Desativar sugestões e apps promovidos",
-            "Desliga dicas, anúncios no Menu Iniciar, apps promovidos e sugestões na caixa de pesquisa.",
+        // Cleanup and privacy
+        new RegistryTweak(c, "suggestions-off", "Turn off suggestions and promoted apps",
+            "Disables tips, Start menu ads, promoted apps and search box suggestions.",
             TweakCategory.Privacy, RiskLevel.Low,
             Reg.CuDword(ContentDelivery, "SystemPaneSuggestionsEnabled", 0),
             Reg.CuDword(ContentDelivery, "SubscribedContent-338389Enabled", 0),
             Reg.CuDword(ContentDelivery, "SubscribedContent-353694Enabled", 0),
             Reg.LmDword(@"SOFTWARE\Policies\Microsoft\Windows\CloudContent", "DisableWindowsConsumerFeatures", 1),
             Reg.LmDword(@"SOFTWARE\Policies\Microsoft\Windows\Windows Search", "DisableSearchBoxSuggestions", 1)),
-        new RegistryTweak(c, "recent-tracking-off", "Não registrar arquivos recentes",
-            "Para de guardar a lista de arquivos recentes e frequentes no Explorador e no Menu Iniciar.",
+        new RegistryTweak(c, "recent-tracking-off", "Stop tracking recent files",
+            "Stops keeping the list of recent and frequent files in File Explorer and the Start menu.",
             TweakCategory.Privacy, RiskLevel.Low,
             Reg.CuDword(ExplorerAdvanced, "Start_TrackDocs", 0),
             Reg.CuDword(ExplorerAdvanced, "ShowRecent", 0),
@@ -122,7 +122,7 @@ public static class TweakCatalog
         MaintenanceTweaks.ClearRecentHistory(c),
         MaintenanceTweaks.OneDriveRemove(c),
 
-        // Sistema
+        // System
         MaintenanceTweaks.RestorePoint(c),
         MaintenanceTweaks.TrimSystemDrive(c),
         MaintenanceTweaks.LargeFilesReport(c),
@@ -134,17 +134,17 @@ public static class TweakCatalog
 public sealed class AutoLoginTweak : RegistryTweak
 {
     public AutoLoginTweak(TweakContext ctx)
-        : base(ctx, "autologin-netplwiz", "Configurar login automático (netplwiz)",
-            "Abre o netplwiz para você escolher o usuário que entra sem senha. O app não guarda nenhuma senha.",
+        : base(ctx, "autologin-netplwiz", "Set up automatic sign-in (netplwiz)",
+            "Opens netplwiz so you can pick the account that signs in without a password. The app never stores a password.",
             TweakCategory.System, RiskLevel.Medium,
             Reg.LmDword(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\PasswordLess\Device", "DevicePasswordLessBuildVersion", 0, onlyIfKeyExists: true))
     {
-        Warning = "Entrar sem senha deixa qualquer pessoa com acesso físico ao PC usar a sua conta.";
+        Warning = "Signing in without a password lets anyone with physical access to the PC use your account.";
     }
 
     protected override string? OnApplied(TweakSnapshot snapshot)
     {
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("netplwiz.exe") { UseShellExecute = true });
-        return "netplwiz aberto. Desmarque \"Os usuários devem digitar...\" e confirme a conta.";
+        return "netplwiz opened. Clear \"Users must enter a user name and password to use this computer\" and confirm the account.";
     }
 }

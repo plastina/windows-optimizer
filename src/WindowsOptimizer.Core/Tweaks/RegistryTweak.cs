@@ -58,7 +58,7 @@ public class RegistryTweak : TweakBase
         ActiveEdits()
             .Select(e => new PreviewLine(
                 e.Name,
-                Ctx.Registry.GetValue(e.Hive, e.SubKey, e.Name)?.ToString() ?? "(ausente)",
+                Ctx.Registry.GetValue(e.Hive, e.SubKey, e.Name)?.ToString() ?? "(not set)",
                 e.Value.ToString(),
                 e.FullKey))
             .ToList();
@@ -93,16 +93,16 @@ public class RegistryTweak : TweakBase
         if (errors.Count > 0)
         {
             if (existing is null && errors.Count == edits.Count) Ctx.State.Delete(Id);
-            return TweakResult.Fail("Não foi possível gravar: " + string.Join("; ", errors));
+            return TweakResult.Fail("Could not write: " + string.Join("; ", errors));
         }
 
-        return TweakResult.Ok(OnApplied(snapshot) ?? "Aplicado.");
+        return TweakResult.Ok(OnApplied(snapshot) ?? "Applied.");
     }
 
     public override TweakResult Undo()
     {
         var snapshot = Ctx.State.Load(Id);
-        if (snapshot is null) return TweakResult.Fail("Não há backup deste ajuste; o app não o aplicou.");
+        if (snapshot is null) return TweakResult.Fail("No backup for this tweak; the app did not apply it.");
 
         var errors = new List<string>();
         foreach (var entry in snapshot.Registry)
@@ -132,10 +132,10 @@ public class RegistryTweak : TweakBase
 
         var extra = OnUndoing(snapshot);
 
-        if (errors.Count > 0) return TweakResult.Fail("Não foi possível restaurar: " + string.Join("; ", errors));
+        if (errors.Count > 0) return TweakResult.Fail("Could not restore: " + string.Join("; ", errors));
 
         Ctx.State.Delete(Id);
-        return TweakResult.Ok(extra ?? "Restaurado ao valor anterior.");
+        return TweakResult.Ok(extra ?? "Restored to the previous value.");
     }
 
     /// <summary>Lets subclasses record extra state (services, files...) before anything changes.</summary>

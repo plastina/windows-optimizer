@@ -41,14 +41,14 @@ public sealed class MainViewModel : ObservableObject
 
     private static readonly Dictionary<TweakCategory, (string Title, string Blurb)> CategoryText = new()
     {
-        [TweakCategory.Updates] = ("Atualizações", "Controle quando e o que o Windows Update instala."),
-        [TweakCategory.Power] = ("Energia", "Desempenho constante, sem o PC desligando a tela ou dormindo no meio do jogo."),
-        [TweakCategory.Gaming] = ("Jogos", "Prioridade para o jogo e menos coisa rodando por trás."),
-        [TweakCategory.Appearance] = ("Aparência", "Tema, data e hora, barra de tarefas e Menu Iniciar."),
-        [TweakCategory.Language] = ("Idioma e região", "Idioma de exibição, região e teclado."),
-        [TweakCategory.Network] = ("Rede", "Servidores de DNS das placas de rede."),
-        [TweakCategory.Privacy] = ("Limpeza e privacidade", "Menos sugestões, menos histórico e menos apps que você não pediu."),
-        [TweakCategory.System] = ("Sistema", "Ponto de restauração, manutenção do disco e login."),
+        [TweakCategory.Updates] = ("Updates", "Control when and what Windows Update installs."),
+        [TweakCategory.Power] = ("Power", "Steady performance, without the PC turning off the screen or sleeping mid-game."),
+        [TweakCategory.Gaming] = ("Gaming", "Priority for the game and less running behind it."),
+        [TweakCategory.Appearance] = ("Appearance", "Theme, date and time, taskbar and Start menu."),
+        [TweakCategory.Language] = ("Language and region", "Display language, region and keyboard."),
+        [TweakCategory.Network] = ("Network", "DNS servers of the network adapters."),
+        [TweakCategory.Privacy] = ("Cleanup and privacy", "Fewer suggestions, less history and fewer apps you didn't ask for."),
+        [TweakCategory.System] = ("System", "Restore point, disk maintenance and sign-in."),
     };
 
     private readonly StringBuilder _log = new();
@@ -58,7 +58,7 @@ public sealed class MainViewModel : ObservableObject
     private bool _isLoading = true;
     private bool _showLog;
     private bool _createRestorePoint = true;
-    private string _lastMessage = "Lendo o estado atual do Windows…";
+    private string _lastMessage = "Reading the current Windows state…";
     private string _logText = "";
 
     public MainViewModel(TweakEngine engine)
@@ -74,7 +74,7 @@ public sealed class MainViewModel : ObservableObject
             .Select(t => new TweakViewModel(t, this))
             .ToList();
 
-        var everything = new CategoryViewModel("Todos os ajustes", "Tudo o que o app pode mudar, na ordem das categorias.", AllTweaks);
+        var everything = new CategoryViewModel("All tweaks", "Everything the app can change, in category order.", AllTweaks);
         Categories.Add(everything);
         foreach (var group in AllTweaks.GroupBy(t => t.Category).OrderBy(g => g.Key))
         {
@@ -140,14 +140,14 @@ public sealed class MainViewModel : ObservableObject
     public async Task LoadAsync()
     {
         IsLoading = true;
-        LastMessage = "Lendo o estado atual do Windows…";
+        LastMessage = "Reading the current Windows state…";
 
         var probes = await Task.Run(() => AllTweaks.Select(t => (Tweak: t, Probe: t.Probe())).ToList());
         foreach (var (tweak, probe) in probes) tweak.ApplyProbe(probe);
 
         RefreshCounts();
         IsLoading = false;
-        LastMessage = $"{AllTweaks.Count} ajustes disponíveis.";
+        LastMessage = $"{AllTweaks.Count} tweaks available.";
     }
 
     public void RefreshCounts()
@@ -161,10 +161,10 @@ public sealed class MainViewModel : ObservableObject
         if (!CreateRestorePoint || _restorePointDone || _restorePoint is null || about.Id == RestorePointId) return;
         _restorePointDone = true;
 
-        LastMessage = "Criando um ponto de restauração antes do primeiro ajuste…";
+        LastMessage = "Creating a restore point before the first tweak…";
         var result = await Task.Run(() => Engine.Apply(_restorePoint));
         if (!result.Success)
-            LastMessage = "Não foi possível criar o ponto de restauração; o ajuste continua.";
+            LastMessage = "Could not create the restore point; the tweak continues.";
     }
 
     private void OnLogged(string line)
