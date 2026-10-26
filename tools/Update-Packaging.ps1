@@ -117,6 +117,9 @@ ManifestType: defaultLocale
 ManifestVersion: $schema
 "@ | Set-Content (Join-Path $dir "$id.locale.en-US.yaml") -Encoding UTF8
 
+# winget-pkgs wants one pull request per version, so only the newest version is kept here.
+Get-ChildItem (Split-Path $dir -Parent) -Directory | Where-Object Name -ne $Version | Remove-Item -Recurse -Force
+
 Write-Host "Scoop manifest:  bucket\windows-optimizer.json"
 Write-Host "winget manifest: $dir"
 Write-Host "SHA-256: $hash"

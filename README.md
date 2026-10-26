@@ -95,20 +95,14 @@ Open [`TweakCatalog.cs`](src/WindowsOptimizer.Core/TweakCatalog.cs) and add an e
 
 High-risk tweaks need a `Warning`; a test enforces that.
 
-## Publishing a release
+## Releases
 
-```bash
-git tag v0.2.0
-git push origin v0.2.0
-```
+Releases are automatic. Every push to `main` runs the [`ci.yml`](.github/workflows/ci.yml) pipeline, which builds and tests, and, if the tests pass, publishes a GitHub release with a single self-contained win-x64 `.exe` and its checksum. Pull requests only build and test. You can also run it by hand from the Actions tab.
 
-The [`release.yml`](.github/workflows/release.yml) workflow runs the tests, publishes a single self-contained win-x64 `.exe` and attaches it to the release with its checksum. Tags with a hyphen (for example `v0.2.0-rc1`) are published as pre-releases. The [`ci.yml`](.github/workflows/ci.yml) workflow builds and tests on every push and pull request.
-
-After the release is published, update the package manifests and commit them:
-
-```bash
-powershell -ExecutionPolicy Bypass -File .\tools\Update-Packaging.ps1 -Version 0.2.0
-```
+- **Version**: `<version.txt>.<run number>`, for example `0.2.7`. Edit [`version.txt`](version.txt) (it holds `MAJOR.MINOR`) to move to 0.3, 1.0 and so on; the last number keeps counting on its own.
+- **No release for documentation**: pushes that only touch Markdown files, `LICENSE`, `bucket/` or `packaging/winget/` skip the pipeline.
+- **Package manifests**: after each release the pipeline regenerates the Scoop and winget manifests with [`tools/Update-Packaging.ps1`](tools/Update-Packaging.ps1) and commits them to `main` (marked `[skip ci]`, so it can't start another release). Pull the latest `main` before you push.
+- **Update notice**: every release counts as "latest", so people with **Check for updates on start** on see the banner after each one.
 
 ## License
 

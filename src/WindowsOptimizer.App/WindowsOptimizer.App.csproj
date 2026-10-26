@@ -9,7 +9,8 @@
     <AssemblyName>WindowsOptimizer</AssemblyName>
     <RootNamespace>WindowsOptimizer.App</RootNamespace>
     <Product>Windows Optimizer</Product>
-    <Version>0.1.0</Version>
+    <!-- Local builds only; the pipeline overrides it with <version.txt>.<run number>. -->
+    <Version>0.2.0</Version>
   </PropertyGroup>
 
   <!-- Release builds ask for administrator rights (the tweaks write to HKLM). Debug builds don't,

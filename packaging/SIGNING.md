@@ -1,6 +1,6 @@
 # Code signing with SignPath
 
-Releases are not signed yet. The [release workflow](../.github/workflows/release.yml) already knows how to sign the
+Releases are not signed yet. The [pipeline](../.github/workflows/ci.yml) already knows how to sign the
 `.exe` with [SignPath](https://signpath.io); it only does so once the repository variable
 `SIGNPATH_ORGANIZATION_ID` exists. Until then it publishes the unsigned file exactly as before.
 
@@ -23,7 +23,8 @@ partly yours to do. Their conditions are at <https://signpath.org/terms>.
 4. **Add the secrets to GitHub** (Settings > Secrets and variables > Actions):
    - Secret `SIGNPATH_API_TOKEN`: an API token of a user allowed to submit signing requests.
    - Variable `SIGNPATH_ORGANIZATION_ID`: your SignPath organization id. Creating this variable is what turns signing on.
-5. **Publish a release** (push a tag). SignPath asks an approver to confirm each signing request.
+5. **Publish a release** (push to `main`). SignPath asks an approver to confirm each signing request, so an
+   automatic release waits for that approval (up to 10 minutes by default) and fails if nobody confirms in time.
 6. **Update the README.** SignPath requires a "Code signing policy" section naming the roles and people
    (committers and reviewers, approvers), and the lines "Free code signing provided by SignPath.io, certificate by
    SignPath Foundation". The README has a placeholder for it.

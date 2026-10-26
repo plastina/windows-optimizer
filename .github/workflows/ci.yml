@@ -1,12 +1,28 @@
-name: CI
+name: CI and release
 
+# Every push to main builds, tests and, if the tests pass, publishes a GitHub release with a single
+# WindowsOptimizer.exe. The version is "<version.txt>.<run number>", for example 0.2.7: edit version.txt to
+# move to 0.3, 1.0 and so on. Pull requests only build and test. You can also run it by hand (Actions tab).
+# If the SIGNPATH_ORGANIZATION_ID repository variable is set, the exe is code-signed first (see packaging/SIGNING.md).
 on:
   push:
     branches: [main]
+    # Documentation and package metadata don't change the app, so they don't need a new release.
+    paths-ignore:
+      - '**/*.md'
+      - 'LICENSE'
+      - 'bucket/**'
+      - 'packaging/winget/**'
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
+
+# One release at a time; a newer push waits instead of racing the previous one.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build-and-test:
@@ -23,3 +39,96 @@ jobs:
 
       - name: Test
         run: dotnet test WindowsOptimizer.sln -c Release --no-build --nologo
+
+  release:
+    needs: build-and-test
+    if: ${{ github.event_name != 'pull_request' }}
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Work out the version
+        shell: pwsh
+        run: |
+          $base = (Get-Content version.txt -Raw).Trim()
+          $version = "$base.${{ github.run_number }}"
+          if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "version.txt must hold MAJOR.MINOR (for example 0.2); got '$base'." }
+          "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "EXE_NAME=WindowsOptimizer-v$version-win-x64.exe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "Releasing $version"
+
+      - name: Publish single-file executable
+        shell: pwsh
+        run: |
+          dotnet publish src/WindowsOptimizer.App -c Release -r win-x64 --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:EnableCompressionInSingleFile=true `
+            -p:Version=$env:VERSION `
+            -o publish
+          Move-Item publish/WindowsOptimizer.exe "publish/$env:EXE_NAME"
+
+      # --- Optional code signing with SignPath (free for open-source projects) ---
+      - name: Upload the unsigned executable
+        id: unsigned
+        if: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-executable
+          path: publish/${{ env.EXE_NAME }}
+
+      - name: Sign with SignPath
+        if: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' }}
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'windows-optimizer' }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG || 'release-signing' }}
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signed
+
+      - name: Use the signed executable
+        if: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' }}
+        shell: pwsh
+        run: Copy-Item "signed/$env:EXE_NAME" "publish/$env:EXE_NAME" -Force
+
+      # The checksum is of the file people will actually download, so it comes after signing.
+      - name: Write the checksum
+        shell: pwsh
+        run: |
+          $hash = (Get-FileHash "publish/$env:EXE_NAME" -Algorithm SHA256).Hash.ToLower()
+          "$hash  $env:EXE_NAME" | Out-File "publish/$env:EXE_NAME.sha256" -Encoding ascii
+
+      - name: Create the release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.VERSION }}
+          target_commitish: ${{ github.sha }}
+          name: Windows Optimizer ${{ env.VERSION }}
+          files: |
+            publish/*.exe
+            publish/*.sha256
+          generate_release_notes: true
+
+      # Keeps `scoop install` and the winget manifests pointing at the release that was just published.
+      # A failure here must not undo the release, so it is allowed to fail. Pushes made with GITHUB_TOKEN
+      # don't start new workflow runs, so this commit can't trigger another release.
+      - name: Update the Scoop and winget manifests
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          ./tools/Update-Packaging.ps1 -Version $env:VERSION
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add bucket packaging/winget
+          git commit -m "Update Scoop and winget manifests for $env:VERSION [skip ci]"
+          git pull --rebase origin main
+          git push origin HEAD:main
