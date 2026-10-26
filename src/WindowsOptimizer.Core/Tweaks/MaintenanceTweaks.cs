@@ -19,7 +19,9 @@ public static class MaintenanceTweaks
         apply: () => FromCommand(c.Runner.Run("powercfg", "/hibernate off"), "Hibernation turned off."),
         undo: () => FromCommand(c.Runner.Run("powercfg", "/hibernate on"), "Hibernation turned back on."),
         available: PowerCapabilities.SupportsHibernate,
-        preview: () => new[] { new PreviewLine("Hibernation and Fast Startup", "on", "off") });
+        preview: () => new[] { new PreviewLine("Hibernation and Fast Startup", "on", "off") },
+        fingerprint: () => "hiberfil.sys exists: " +
+            File.Exists(Path.Combine((Environment.GetEnvironmentVariable("SystemDrive") ?? "C:") + @"\", "hiberfil.sys")));
 
     public static ITweak RestorePoint(TweakContext c) => new DelegateTweak(
         c, "restore-point", "Create a restore point",

@@ -24,6 +24,15 @@ public interface IRegistryAccess
     void DeleteKeyIfEmpty(RegHive hive, string subKey);
     void DeleteKeyTree(RegHive hive, string subKey);
     void ClearValues(RegHive hive, string subKey);
+
+    /// <summary>Names of the values in a key (empty when the key does not exist).</summary>
+    IReadOnlyList<string> GetValueNames(RegHive hive, string subKey);
+
+    /// <summary>Names of the sub-keys of a key (empty when the key does not exist).</summary>
+    IReadOnlyList<string> GetSubKeyNames(RegHive hive, string subKey);
+
+    byte[]? GetBinary(RegHive hive, string subKey, string name);
+    void SetBinary(RegHive hive, string subKey, string name, byte[] data);
 }
 
 public sealed class WindowsRegistry : IRegistryAccess
@@ -88,5 +97,30 @@ public sealed class WindowsRegistry : IRegistryAccess
         using var key = Root(hive).OpenSubKey(subKey, writable: true);
         if (key is null) return;
         foreach (var name in key.GetValueNames()) key.DeleteValue(name, throwOnMissingValue: false);
+    }
+
+    public IReadOnlyList<string> GetValueNames(RegHive hive, string subKey)
+    {
+        using var key = Root(hive).OpenSubKey(subKey);
+        return key?.GetValueNames() ?? Array.Empty<string>();
+    }
+
+    public IReadOnlyList<string> GetSubKeyNames(RegHive hive, string subKey)
+    {
+        using var key = Root(hive).OpenSubKey(subKey);
+        return key?.GetSubKeyNames() ?? Array.Empty<string>();
+    }
+
+    public byte[]? GetBinary(RegHive hive, string subKey, string name)
+    {
+        using var key = Root(hive).OpenSubKey(subKey);
+        if (key is null || key.GetValue(name) is null || key.GetValueKind(name) != RegistryValueKind.Binary) return null;
+        return (byte[])key.GetValue(name)!;
+    }
+
+    public void SetBinary(RegHive hive, string subKey, string name, byte[] data)
+    {
+        using var key = Root(hive).CreateSubKey(subKey, writable: true);
+        key.SetValue(name, data, RegistryValueKind.Binary);
     }
 }

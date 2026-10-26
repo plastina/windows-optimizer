@@ -33,6 +33,20 @@ public sealed class LanguageTweak : TweakBase
         return locale == "en-US" ? TweakStatus.Applied : TweakStatus.NotApplied;
     }
 
+    /// <summary>Culture, system locale and language list as Windows PowerShell reports them.</summary>
+    public override string? Fingerprint()
+    {
+        var result = Ctx.Runner.RunPowerShell("""
+            $o = [ordered]@{
+                culture = (Get-Culture).Name
+                locale  = (Get-WinSystemLocale).Name
+                langs   = (@(Get-WinUserLanguageList | ForEach-Object { $_.LanguageTag }) -join ',')
+            }
+            $o | ConvertTo-Json -Compress
+            """);
+        return result.Success ? result.Output.Trim() : null;
+    }
+
     public override IReadOnlyList<PreviewLine> Preview()
     {
         return new[]

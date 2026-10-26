@@ -29,6 +29,7 @@ public abstract class TweakBase : ITweak
 
     public virtual bool IsAvailable() => true;
     public abstract TweakStatus GetStatus();
+    public virtual string? Fingerprint() => null;
     public virtual bool CanUndo() => Ctx.State.Exists(Id);
     public virtual IReadOnlyList<PreviewLine> Preview() => Array.Empty<PreviewLine>();
     public abstract TweakResult Apply();

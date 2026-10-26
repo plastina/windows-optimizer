@@ -1,6 +1,6 @@
 namespace WindowsOptimizer.Core;
 
-public enum TweakCategory { Updates, Power, Gaming, Appearance, Language, Network, Privacy, System }
+public enum TweakCategory { Updates, Power, Gaming, Appearance, Language, Network, Startup, Privacy, System }
 
 public enum RiskLevel { Low, Medium, High }
 
@@ -33,6 +33,14 @@ public interface ITweak
 
     bool IsAvailable();
     TweakStatus GetStatus();
+
+    /// <summary>
+    /// A digest of the real system state this tweak changes, read straight from Windows (not from what the
+    /// tweak last wrote). The self-test compares it before, after applying and after undoing. Null when the
+    /// status already reads the real state.
+    /// </summary>
+    string? Fingerprint();
+
     bool CanUndo();
     IReadOnlyList<PreviewLine> Preview();
     TweakResult Apply();

@@ -40,6 +40,21 @@ public sealed class PowerPlanTweak : TweakBase
         return IsMaxPlan(active.Value) ? TweakStatus.Applied : TweakStatus.NotApplied;
     }
 
+    /// <summary>The active plan and its AC/DC timers, straight from powercfg.</summary>
+    public override string? Fingerprint()
+    {
+        var active = GetActive();
+        if (active is null) return null;
+
+        var parts = new List<string> { active.Value.Guid };
+        foreach (var (key, subGroup, setting) in Timers)
+        {
+            var hex = HexValue.Matches(Ctx.Runner.Run("powercfg", $"/query {active.Value.Guid} {subGroup} {setting}").Output);
+            parts.Add($"{key}={(hex.Count >= 2 ? hex[^2].Value + "/" + hex[^1].Value : "?")}");
+        }
+        return string.Join("; ", parts);
+    }
+
     public override IReadOnlyList<PreviewLine> Preview() => new[]
     {
         new PreviewLine("Active power plan", GetActive()?.Name ?? "—", "Ultimate Performance"),

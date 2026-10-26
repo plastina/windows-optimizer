@@ -49,7 +49,7 @@ public sealed class CatalogTests : IDisposable
     [Fact]
     public void Every_registry_toggle_round_trips_on_an_empty_registry()
     {
-        foreach (var tweak in TweakCatalog.Create(_env.Context).OfType<RegistryTweak>().Where(t => t is not AutoLoginTweak))
+        foreach (var tweak in TweakCatalog.Create(_env.Context).OfType<RegistryTweak>().Where(t => t is not AutoLoginTweak && t.IsAvailable()))
         {
             var applied = tweak.Apply();
             Assert.True(applied.Success, $"{tweak.Id}: {applied.Message}");

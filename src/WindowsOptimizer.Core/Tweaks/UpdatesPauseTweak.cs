@@ -42,6 +42,17 @@ public sealed class UpdatesPauseTweak : RegistryTweak
         return "Automatic updates restored. Restart the PC to finish.";
     }
 
+    /// <summary>The start type of each update service as the Service Control Manager reports it.</summary>
+    public override string? Fingerprint() =>
+        string.Join("; ", Services.Select(s => $"{s}={ServiceStartType(s)}"));
+
+    private string ServiceStartType(string service)
+    {
+        var match = System.Text.RegularExpressions.Regex.Match(
+            Ctx.Runner.Run("sc.exe", $"qc {service}").Output, @"START_TYPE\s*:\s*(.+)");
+        return match.Success ? match.Groups[1].Value.Trim() : "unknown";
+    }
+
     /// <summary>Reads the start mode in the vocabulary of <c>sc config</c>.</summary>
     private string? ReadStartMode(string service)
     {

@@ -33,7 +33,11 @@ public partial class MainWindow : Window
         {
             await CaptureAsync(path);
             Application.Current.Shutdown();
+            return;
         }
+
+        // Last, so a slow or missing network never delays the first screen.
+        if (!App.DemoUpdate) await ViewModel.CheckForUpdateAsync();
     }
 
     private void OnLogChanged(object sender, TextChangedEventArgs e) => ((TextBox)sender).ScrollToEnd();

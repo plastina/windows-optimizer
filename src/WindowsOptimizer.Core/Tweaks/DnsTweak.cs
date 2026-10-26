@@ -33,6 +33,12 @@ public sealed class DnsTweak : TweakBase
             : TweakStatus.Partial;
     }
 
+    /// <summary>What <c>netsh</c> reports for each adapter, so DHCP versus static is part of the comparison.</summary>
+    public override string? Fingerprint() =>
+        string.Join(" | ", ActiveAdapters().Select(a =>
+            a.Name + ": " + Regex.Replace(
+                Ctx.Runner.Run("netsh", $"interface ip show dnsservers name=\"{a.Name}\"").Output.Trim(), @"\s+", " ")));
+
     public override IReadOnlyList<PreviewLine> Preview() =>
         ActiveAdapters()
             .Select(a =>

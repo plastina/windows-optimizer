@@ -53,6 +53,7 @@ public static class SelfTest
         try
         {
             var before = tweak.GetStatus();
+            var beforeReal = tweak.Fingerprint();
             var changes = tweak.Preview().Count;
 
             var apply = tweak.Apply();
@@ -61,6 +62,11 @@ public static class SelfTest
             var applied = tweak.GetStatus();
             if (tweak.Kind == TweakKind.Toggle && applied is not (TweakStatus.Applied or TweakStatus.Unknown))
                 return Done(SelfTestOutcome.Fail, $"After applying, the status is {applied}, expected Applied.");
+
+            // The status is what the app believes; the fingerprint is what Windows reports.
+            var appliedReal = tweak.Fingerprint();
+            if (beforeReal is not null && before == TweakStatus.NotApplied && appliedReal == beforeReal)
+                return Done(SelfTestOutcome.Fail, "Apply reported success but the real system state did not change.");
 
             if (!tweak.CanUndo())
                 return Done(SelfTestOutcome.Pass, $"Ran ({apply.Message}). Nothing to undo.");
@@ -72,8 +78,13 @@ public static class SelfTest
             if (before != TweakStatus.Unknown && after != before)
                 return Done(SelfTestOutcome.Fail, $"After undoing, the status is {after}; it was {before}.");
 
+            var afterReal = tweak.Fingerprint();
+            if (beforeReal is not null && afterReal != beforeReal)
+                return Done(SelfTestOutcome.Fail, $"After undoing, the real system state differs from before. Before: {beforeReal} After: {afterReal}");
+
             return Done(SelfTestOutcome.Pass,
-                $"Before {before}, applied {applied}, after undo {after}. {changes} line(s) in \"what changes\".");
+                $"Before {before}, applied {applied}, after undo {after}. {changes} line(s) in \"what changes\"." +
+                (beforeReal is null ? "" : " Real state verified."));
         }
         catch (Exception ex)
         {

@@ -9,7 +9,10 @@ public static class TweakCatalog
     private const string ContentDelivery = @"Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager";
     private const string International = @"Control Panel\International";
 
-    public static IReadOnlyList<ITweak> Create(TweakContext c) => new ITweak[]
+    public static IReadOnlyList<ITweak> Create(TweakContext c) =>
+        Builtin(c).Concat(StartupDiscovery.Discover(c)).ToList();
+
+    private static ITweak[] Builtin(TweakContext c) => new ITweak[]
     {
         // Updates
         new UpdatesPauseTweak(c)
@@ -52,6 +55,20 @@ public static class TweakCatalog
             TweakCategory.Gaming, RiskLevel.Low,
             Reg.CuDword(@"System\GameConfigStore", "GameDVR_Enabled", 0),
             Reg.CuDword(@"Software\Microsoft\Windows\CurrentVersion\GameDVR", "AppCaptureEnabled", 0)),
+        new RegistryTweak(c, "game-bar-off", "Turn off Xbox Game Bar",
+            "Disables the Game Bar overlay and its controller shortcut, and blocks Game DVR by policy.",
+            TweakCategory.Gaming, RiskLevel.Low,
+            Reg.CuDword(@"Software\Microsoft\GameBar", "UseNexusForGameBarEnabled", 0),
+            Reg.CuDword(@"Software\Microsoft\GameBar", "ShowStartupPanel", 0),
+            Reg.LmDword(@"SOFTWARE\Policies\Microsoft\Windows\GameDVR", "AllowGameDVR", 0)),
+        new RegistryTweak(c, "hags-on", "Turn on hardware-accelerated GPU scheduling",
+            "Lets the GPU manage its own video memory scheduling. It helps some games and hurts others, depending on the graphics driver. Needs a recent GPU and driver.",
+            TweakCategory.Gaming, RiskLevel.Medium,
+            Reg.LmDword(@"SYSTEM\CurrentControlSet\Control\GraphicsDrivers", "HwSchMode", 2))
+        {
+            NeedsRestart = true,
+        },
+        new NagleTweak(c),
         MaintenanceTweaks.RacingGtEvoAutostart(c),
 
         // Appearance
@@ -120,6 +137,8 @@ public static class TweakCatalog
             Reg.CuDword(ExplorerAdvanced, "ShowRecent", 0),
             Reg.CuDword(ExplorerAdvanced, "ShowFrequent", 0)),
         MaintenanceTweaks.ClearRecentHistory(c),
+        CleanupTweaks.TempFiles(c),
+        CleanupTweaks.UpdateCache(c),
         MaintenanceTweaks.OneDriveRemove(c),
 
         // System

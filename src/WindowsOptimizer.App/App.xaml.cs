@@ -12,6 +12,10 @@ public partial class App : Application
     public static int ScreenshotCategory { get; private set; }
     public static bool ScreenshotExpand { get; private set; }
 
+    /// <summary>Development switches: <c>--theme light|dark</c> forces a theme without saving it; <c>--demo-update</c> shows the update banner.</summary>
+    public static ThemeChoice? ThemeOverride { get; private set; }
+    public static bool DemoUpdate { get; private set; }
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -35,6 +39,13 @@ public partial class App : Application
                 case "--expand":
                     ScreenshotExpand = true;
                     break;
+                case "--demo-update":
+                    DemoUpdate = true;
+                    break;
+                case "--theme" when i + 1 < e.Args.Length && Enum.TryParse<ThemeChoice>(e.Args[i + 1], ignoreCase: true, out var theme):
+                    ThemeOverride = theme;
+                    i++;
+                    break;
             }
         }
 
@@ -44,8 +55,16 @@ public partial class App : Application
             return;
         }
 
-        var window = new MainWindow { DataContext = new MainViewModel(TweakEngine.CreateDefault()) };
+        var settings = AppSettings.Load();
+        if (ThemeOverride is { } forced) settings.Theme = forced;
+        ThemeManager.Apply(settings.Theme);
+
+        var viewModel = new MainViewModel(TweakEngine.CreateDefault(), settings);
+        if (DemoUpdate) viewModel.ShowUpdate(new ReleaseInfo("9.9.9", UpdateChecker.ReleasesPage));
+
+        var window = new MainWindow { DataContext = viewModel };
         window.Show();
+        ThemeManager.UseDarkTitleBar(window, ThemeManager.IsDark(settings.Theme));
     }
 
     /// <summary>

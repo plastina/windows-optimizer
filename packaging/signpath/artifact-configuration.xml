@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Paste this into the SignPath project's artifact configuration.
+  The workflow uploads the exe with actions/upload-artifact, which wraps it in a zip, hence <zip-file>.
+  Not run against SignPath yet: verify against https://docs.signpath.io/artifact-configuration/
+-->
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <zip-file>
+    <pe-file path="WindowsOptimizer-*-win-x64.exe">
+      <authenticode-sign/>
+    </pe-file>
+  </zip-file>
+</artifact-configuration>

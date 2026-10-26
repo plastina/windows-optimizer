@@ -47,6 +47,7 @@ public sealed class MainViewModel : ObservableObject
         [TweakCategory.Appearance] = ("Appearance", "Theme, date and time, taskbar and Start menu."),
         [TweakCategory.Language] = ("Language and region", "Display language, region and keyboard."),
         [TweakCategory.Network] = ("Network", "DNS servers of the network adapters."),
+        [TweakCategory.Startup] = ("Startup programs", "Apps that start with Windows. Turning one off keeps it installed; you can still open it yourself."),
         [TweakCategory.Privacy] = ("Cleanup and privacy", "Fewer suggestions, less history and fewer apps you didn't ask for."),
         [TweakCategory.System] = ("System", "Restore point, disk maintenance and sign-in."),
     };
@@ -60,10 +61,15 @@ public sealed class MainViewModel : ObservableObject
     private bool _createRestorePoint = true;
     private string _lastMessage = "Reading the current Windows state…";
     private string _logText = "";
+    private readonly AppSettings _settings;
+    private bool _hasUpdate;
+    private string _updateText = "";
+    private string _updateUrl = UpdateChecker.ReleasesPage;
 
-    public MainViewModel(TweakEngine engine)
+    public MainViewModel(TweakEngine engine, AppSettings settings)
     {
         Engine = engine;
+        _settings = settings;
         IsAdmin = new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
         Engine.Logged += OnLogged;
 
@@ -83,6 +89,25 @@ public sealed class MainViewModel : ObservableObject
         }
 
         _selected = Categories[0];
+        CycleThemeCommand = new AsyncCommand(() =>
+        {
+            // System -> Light -> Dark -> System
+            _settings.Theme = (ThemeChoice)(((int)_settings.Theme + 1) % 3);
+            _settings.Save();
+            ThemeManager.Apply(_settings.Theme);
+            Raise(nameof(ThemeLabel));
+            return Task.CompletedTask;
+        });
+        OpenUpdateCommand = new AsyncCommand(() =>
+        {
+            Process.Start(new ProcessStartInfo(_updateUrl) { UseShellExecute = true });
+            return Task.CompletedTask;
+        });
+        DismissUpdateCommand = new AsyncCommand(() =>
+        {
+            HasUpdate = false;
+            return Task.CompletedTask;
+        });
         RefreshCommand = new AsyncCommand(LoadAsync);
         OpenLogFolderCommand = new AsyncCommand(() =>
         {
@@ -100,6 +125,50 @@ public sealed class MainViewModel : ObservableObject
 
     public ICommand RefreshCommand { get; }
     public ICommand OpenLogFolderCommand { get; }
+    public ICommand CycleThemeCommand { get; }
+    public ICommand OpenUpdateCommand { get; }
+    public ICommand DismissUpdateCommand { get; }
+
+    public string ThemeLabel => $"Theme: {_settings.Theme}";
+
+    public bool CheckForUpdates
+    {
+        get => _settings.CheckForUpdates;
+        set
+        {
+            if (_settings.CheckForUpdates == value) return;
+            _settings.CheckForUpdates = value;
+            _settings.Save();
+            Raise(nameof(CheckForUpdates));
+        }
+    }
+
+    public bool HasUpdate
+    {
+        get => _hasUpdate;
+        private set => Set(ref _hasUpdate, value);
+    }
+
+    public string UpdateText
+    {
+        get => _updateText;
+        private set => Set(ref _updateText, value);
+    }
+
+    public void ShowUpdate(ReleaseInfo release)
+    {
+        _updateUrl = release.Url;
+        UpdateText = $"Version {release.Version} is available (you have {UpdateChecker.CurrentVersion}).";
+        HasUpdate = true;
+    }
+
+    /// <summary>Looks for a newer release, if the user allows it. Never throws and never blocks the window.</summary>
+    public async Task CheckForUpdateAsync()
+    {
+        if (!CheckForUpdates) return;
+        var release = await Task.Run(UpdateChecker.CheckAsync);
+        if (release is not null) ShowUpdate(release);
+    }
 
     public CategoryViewModel? Selected
     {

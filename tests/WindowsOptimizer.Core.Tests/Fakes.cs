@@ -25,6 +25,7 @@ public sealed class FakeRegistry : IRegistryAccess
     public void DeleteValue(RegHive hive, string subKey, string name)
     {
         if (_keys.TryGetValue(Id(hive, subKey), out var values)) values.Remove(name);
+        if (_binary.TryGetValue(Id(hive, subKey), out var bytes)) bytes.Remove(name);
     }
 
     public void DeleteKeyIfEmpty(RegHive hive, string subKey)
@@ -45,6 +46,39 @@ public sealed class FakeRegistry : IRegistryAccess
     public void ClearValues(RegHive hive, string subKey)
     {
         if (_keys.TryGetValue(Id(hive, subKey), out var values)) values.Clear();
+        _binary.Remove(Id(hive, subKey));
+    }
+
+    private readonly Dictionary<(RegHive, string), Dictionary<string, byte[]>> _binary = new();
+
+    public IReadOnlyList<string> GetValueNames(RegHive hive, string subKey)
+    {
+        var id = Id(hive, subKey);
+        var names = new List<string>();
+        if (_keys.TryGetValue(id, out var values)) names.AddRange(values.Keys);
+        if (_binary.TryGetValue(id, out var bytes)) names.AddRange(bytes.Keys);
+        return names;
+    }
+
+    public IReadOnlyList<string> GetSubKeyNames(RegHive hive, string subKey)
+    {
+        var prefix = subKey.ToLowerInvariant() + "\\";
+        return _keys.Keys.Concat(_binary.Keys)
+            .Where(k => k.Item1 == hive && k.Item2.StartsWith(prefix, StringComparison.Ordinal))
+            .Select(k => k.Item2[prefix.Length..].Split('\\')[0])
+            .Distinct()
+            .ToList();
+    }
+
+    public byte[]? GetBinary(RegHive hive, string subKey, string name) =>
+        _binary.TryGetValue(Id(hive, subKey), out var values) && values.TryGetValue(name, out var v) ? v : null;
+
+    public void SetBinary(RegHive hive, string subKey, string name, byte[] data)
+    {
+        AddKey(hive, subKey);
+        var id = Id(hive, subKey);
+        if (!_binary.TryGetValue(id, out var values)) _binary[id] = values = new(StringComparer.OrdinalIgnoreCase);
+        values[name] = data;
     }
 }
 
