@@ -1,0 +1,49 @@
+name: Release
+
+# Push a tag like v0.1.0 to publish a GitHub release with a single WindowsOptimizer.exe.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Test
+        run: dotnet test WindowsOptimizer.sln -c Release --nologo
+
+      - name: Publish single-file executable
+        shell: pwsh
+        run: |
+          $version = '${{ github.ref_name }}'.TrimStart('v')
+          dotnet publish src/WindowsOptimizer.App -c Release -r win-x64 --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:EnableCompressionInSingleFile=true `
+            -p:Version=$version `
+            -o publish
+
+      - name: Name the files and write the checksum
+        shell: pwsh
+        run: |
+          $name = "WindowsOptimizer-${{ github.ref_name }}-win-x64"
+          Move-Item publish/WindowsOptimizer.exe "publish/$name.exe"
+          $hash = (Get-FileHash "publish/$name.exe" -Algorithm SHA256).Hash.ToLower()
+          "$hash  $name.exe" | Out-File "publish/$name.exe.sha256" -Encoding ascii
+
+      - name: Create the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            publish/*.exe
+            publish/*.sha256
+          generate_release_notes: true

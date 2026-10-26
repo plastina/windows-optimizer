@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>WindowsOptimizer</AssemblyName>
+    <RootNamespace>WindowsOptimizer.App</RootNamespace>
+    <Product>Windows Optimizer</Product>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <!-- Release builds ask for administrator rights (the tweaks write to HKLM). Debug builds don't,
+       so the app can be started from the IDE and in screenshots without a UAC prompt. -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' != 'Release'">
+    <ApplicationManifest>app.debug.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WindowsOptimizer.Core\WindowsOptimizer.Core.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,194 @@
+﻿<Application x:Class="WindowsOptimizer.App.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Application.Resources>
+
+        <!-- Palette: cool workshop greys; colour is reserved for state (applied, partial, risk). -->
+        <Color x:Key="Paper">#E9ECEF</Color>
+        <SolidColorBrush x:Key="PaperBrush" Color="#E9ECEF"/>
+        <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="SheetHeadBrush" Color="#F2F4F6"/>
+        <SolidColorBrush x:Key="InkBrush" Color="#15202B"/>
+        <SolidColorBrush x:Key="InkHoverBrush" Color="#2C3B4A"/>
+        <SolidColorBrush x:Key="MutedBrush" Color="#566370"/>
+        <SolidColorBrush x:Key="LineBrush" Color="#D3D9DF"/>
+        <SolidColorBrush x:Key="HoverBrush" Color="#DCE1E6"/>
+        <SolidColorBrush x:Key="AppliedBrush" Color="#1E8E66"/>
+        <SolidColorBrush x:Key="AppliedTextBrush" Color="#14694A"/>
+        <SolidColorBrush x:Key="PartialBrush" Color="#D69E2E"/>
+        <SolidColorBrush x:Key="PartialTextBrush" Color="#8A5A00"/>
+        <SolidColorBrush x:Key="DangerTextBrush" Color="#B83A1B"/>
+        <SolidColorBrush x:Key="FocusBrush" Color="#2F6FED"/>
+        <SolidColorBrush x:Key="DisabledBgBrush" Color="#D3D9DF"/>
+        <SolidColorBrush x:Key="DisabledFgBrush" Color="#6F7B86"/>
+        <SolidColorBrush x:Key="BannerBgBrush" Color="#FFF4D6"/>
+        <SolidColorBrush x:Key="BannerLineBrush" Color="#E3C469"/>
+
+        <!-- Type: Bahnschrift (DIN-style, ships with Windows) for names and numbers, Segoe UI for reading. -->
+        <FontFamily x:Key="DisplayFont">Bahnschrift SemiBold, Segoe UI Semibold</FontFamily>
+        <FontFamily x:Key="BodyFont">Segoe UI Variable Text, Segoe UI</FontFamily>
+        <FontFamily x:Key="DataFont">Cascadia Mono, Consolas</FontFamily>
+
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+
+        <Style TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource BodyFont}"/>
+        </Style>
+
+        <Style x:Key="MetaText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
+        </Style>
+
+        <Style x:Key="DataText" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource DataFont}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontFamily" Value="{StaticResource BodyFont}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{StaticResource InkBrush}" BorderBrush="Transparent"
+                                BorderThickness="2" CornerRadius="4" Padding="16,6" MinWidth="88">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource InkHoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource FocusBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource DisabledBgBrush}"/>
+                                <Setter Property="Foreground" Value="{StaticResource DisabledFgBrush}"/>
+                                <Setter Property="Cursor" Value="Arrow"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SecondaryButton" TargetType="Button">
+            <Setter Property="Foreground" Value="{StaticResource InkBrush}"/>
+            <Setter Property="FontFamily" Value="{StaticResource BodyFont}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="Transparent" BorderBrush="{StaticResource InkBrush}"
+                                BorderThickness="1.5" CornerRadius="4" Padding="15,5" MinWidth="88">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource HoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource FocusBrush}"/>
+                                <Setter TargetName="Bd" Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource LineBrush}"/>
+                                <Setter Property="Foreground" Value="{StaticResource DisabledFgBrush}"/>
+                                <Setter Property="Cursor" Value="Arrow"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Text-only toggle used for "Ver o que muda" and "Registro". -->
+        <Style x:Key="LinkToggle" TargetType="ToggleButton">
+            <Setter Property="Foreground" Value="{StaticResource InkBrush}"/>
+            <Setter Property="FontFamily" Value="{StaticResource BodyFont}"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Bd" BorderBrush="Transparent" BorderThickness="2" CornerRadius="3" Padding="2,2">
+                            <TextBlock x:Name="Label" Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Label" Property="TextDecorations" Value="Underline"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource FocusBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="LinkButton" TargetType="Button">
+            <Setter Property="Foreground" Value="{StaticResource InkBrush}"/>
+            <Setter Property="FontFamily" Value="{StaticResource BodyFont}"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" BorderBrush="Transparent" BorderThickness="2" CornerRadius="3" Padding="2,2">
+                            <TextBlock x:Name="Label" Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Label" Property="TextDecorations" Value="Underline"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource FocusBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="CategoryItem" TargetType="ListBoxItem">
+            <Setter Property="Foreground" Value="{StaticResource InkBrush}"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Bd" Background="Transparent" BorderBrush="Transparent" BorderThickness="2"
+                                CornerRadius="5" Padding="10,7" Margin="0,0,0,2">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource HoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource InkBrush}"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource FocusBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+    </Application.Resources>
+</Application>
