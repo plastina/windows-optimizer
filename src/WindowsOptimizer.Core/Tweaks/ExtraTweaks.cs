@@ -58,6 +58,7 @@ public static class ExtraTweaks
                 "Removes the wait of about ten seconds Windows adds between sign-in and starting your startup programs, so they open right away.",
                 TweakCategory.Startup, RiskLevel.Low,
                 Reg.CuDword(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Serialize", "StartupDelayInMSec", 0)),
+            BluetoothTweaks.OffAtSignIn(c),
             new JsonSettingTweak(c, "discord-start-minimized", "Discord opens minimized to the tray",
                 "Makes Discord start minimized in the tray instead of showing its window every time. Close Discord before you switch this.",
                 discord, "START_MINIMIZED", true, discordMissing),

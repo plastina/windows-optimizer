@@ -228,4 +228,55 @@ public sealed class MoreTweaksTests : IDisposable
         Assert.False(string.IsNullOrWhiteSpace(all["utc-clock"].Warning));
         Assert.Equal(TweakCategory.AI, all["recall-component-remove"].Category);
     }
+
+    /// <summary>Answers "does the task exist" from <see cref="TaskExists"/> and records every script.</summary>
+    private sealed class TaskRunner : ICommandRunner
+    {
+        public bool TaskExists { get; set; }
+        public List<string> Scripts { get; } = new();
+
+        public CommandResult Run(string fileName, string arguments, int timeoutMs = 120_000) => new(0, "", "");
+
+        public CommandResult RunPowerShell(string script, int timeoutMs = 300_000)
+        {
+            Scripts.Add(script);
+            if (script.StartsWith("if (Get-ScheduledTask")) return new(0, TaskExists ? "yes\r\n" : "no\r\n", "");
+            if (script.Contains("Register-ScheduledTask")) TaskExists = true;
+            if (script.StartsWith("Unregister-ScheduledTask")) TaskExists = false;
+            return new(0, "", "");
+        }
+    }
+
+    [Fact]
+    public void Bluetooth_off_at_sign_in_registers_a_logon_task_and_undo_removes_it()
+    {
+        const string bluetoothClass = @"SYSTEM\CurrentControlSet\Control\Class\{e0cbf06c-cd8b-4647-bb8a-263b43f0f974}";
+        var runner = new TaskRunner();
+        var context = _env.Context with { Runner = runner };
+
+        Assert.False(BluetoothTweaks.OffAtSignIn(context).IsAvailable());
+        _env.Registry.AddKey(RegHive.LocalMachine, bluetoothClass + @"\0000");
+        var tweak = BluetoothTweaks.OffAtSignIn(context);
+        Assert.True(tweak.IsAvailable());
+        Assert.False(tweak.RequiresAdmin);
+
+        Assert.Equal(TweakStatus.NotApplied, tweak.GetStatus());
+        Assert.True(tweak.Apply().Success);
+        var register = runner.Scripts.Last();
+        Assert.Contains("-AtLogOn", register);
+        Assert.Contains("-LogonType Interactive", register);
+        Assert.Contains("--headless powershell.exe", register);
+
+        // The radio script travels inside the task as -EncodedCommand (UTF-16 base64).
+        var encoded = register.Split("-EncodedCommand ")[1].Split('\'')[0];
+        var script = System.Text.Encoding.Unicode.GetString(Convert.FromBase64String(encoded));
+        Assert.Contains("SetStateAsync('Off')", script);
+        Assert.Contains("$_.Kind -eq 'Bluetooth'", script);
+
+        Assert.Equal(TweakStatus.Applied, tweak.GetStatus());
+        Assert.True(tweak.CanUndo());
+        Assert.True(tweak.Undo().Success);
+        Assert.StartsWith("Unregister-ScheduledTask", runner.Scripts.Last());
+        Assert.Equal(TweakStatus.NotApplied, tweak.GetStatus());
+    }
 }
