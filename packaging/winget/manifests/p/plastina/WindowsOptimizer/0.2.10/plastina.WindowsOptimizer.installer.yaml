@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.6.0.schema.json
 PackageIdentifier: plastina.WindowsOptimizer
-PackageVersion: 0.2.9
+PackageVersion: 0.2.10
 Platform:
 - Windows.Desktop
 MinimumOSVersion: 10.0.17763.0
@@ -17,7 +17,7 @@ ProductCode: plastina.WindowsOptimizer
 ReleaseDate: 2026-10-28
 Installers:
 - Architecture: x64
-  InstallerUrl: https://github.com/plastina/windows-optimizer/releases/download/v0.2.9/WindowsOptimizer-win-Setup.exe
-  InstallerSha256: C1150975572E15B13FC8A18C0557C0D46DA73E0D8BDEBF712CCCE3263009ED35
+  InstallerUrl: https://github.com/plastina/windows-optimizer/releases/download/v0.2.10/WindowsOptimizer-win-Setup.exe
+  InstallerSha256: B65DAB7AFDC60D9B93ACAB829A4F94C80C9029D53D9168C71477A4E8C3330D03
 ManifestType: installer
 ManifestVersion: 1.6.0
