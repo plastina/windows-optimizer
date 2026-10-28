@@ -51,8 +51,11 @@ public partial class MainWindow : Window
             foreach (var tweak in ViewModel.Selected.Tweaks.Take(2)) tweak.IsExpanded = true;
         }
 
-        // Let bindings, layout and the async preview load settle before drawing.
+        // Let bindings, layout and the async preview load settle before drawing. The health page reads
+        // the hardware first, which can take a few seconds.
         await Task.Delay(800);
+        for (var i = 0; i < 100 && ViewModel.Health.IsRunning; i++) await Task.Delay(200);
+        await Task.Delay(300);
         UpdateLayout();
 
         var content = (FrameworkElement)Content;

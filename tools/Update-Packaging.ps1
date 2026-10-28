@@ -3,7 +3,7 @@
     Rewrites the Scoop and winget manifests for a published GitHub release.
 
 .DESCRIPTION
-    Downloads the release's .sha256 file and regenerates:
+    Downloads the release's .sha256 files and regenerates:
       - bucket/windows-optimizer.json                      (Scoop bucket, this repository)
       - packaging/winget/manifests/p/plastina/WindowsOptimizer/<version>/*.yaml  (to submit to microsoft/winget-pkgs)
     Run it after every release, then commit the result.
@@ -19,20 +19,28 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
-$exeName = "WindowsOptimizer-v$Version-win-x64.exe"
+# Velopack's file names carry no version; the release tag in the URL tells them apart.
+$setupName = 'WindowsOptimizer-win-Setup.exe'
+$portableName = 'WindowsOptimizer-win-Portable.zip'
 $baseUrl = "https://github.com/$Repo/releases/download/v$Version"
 
-Write-Host "Reading the checksum of v$Version..."
-$content = (Invoke-WebRequest -Uri "$baseUrl/$exeName.sha256" -UseBasicParsing).Content
-# Windows PowerShell 5.1 returns octet-stream bodies as bytes; PowerShell 7 returns text.
-$line = if ($content -is [byte[]]) { [Text.Encoding]::UTF8.GetString($content) } else { [string]$content }
-$hash = ($line.Trim() -split '\s+')[0].ToLowerInvariant()
-if ($hash -notmatch '^[0-9a-f]{64}$') { throw "Unexpected checksum file content: $line" }
+function Get-ReleaseHash([string]$fileName) {
+    $content = (Invoke-WebRequest -Uri "$baseUrl/$fileName.sha256" -UseBasicParsing).Content
+    # Windows PowerShell 5.1 returns octet-stream bodies as bytes; PowerShell 7 returns text.
+    $line = if ($content -is [byte[]]) { [Text.Encoding]::UTF8.GetString($content) } else { [string]$content }
+    $hash = ($line.Trim() -split '\s+')[0].ToLowerInvariant()
+    if ($hash -notmatch '^[0-9a-f]{64}$') { throw "Unexpected checksum file content: $line" }
+    $hash
+}
+
+Write-Host "Reading the checksums of v$Version..."
+$setupHash = Get-ReleaseHash $setupName
+$portableHash = Get-ReleaseHash $portableName
 
 $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/tags/v$Version" -Headers @{ 'User-Agent' = 'Update-Packaging' }
 $releaseDate = ([datetime]$release.published_at).ToString('yyyy-MM-dd')
 
-# --- Scoop ---------------------------------------------------------------------------------------
+# --- Scoop: the portable zip. It updates itself like the installed app does. ---------------------------------------------------------------------------------------
 $scoop = [ordered]@{
     version      = $Version
     description  = 'Applies Windows performance, gaming and privacy tweaks one at a time, with undo.'
@@ -40,16 +48,17 @@ $scoop = [ordered]@{
     license      = 'MIT'
     architecture = [ordered]@{
         '64bit' = [ordered]@{
-            url  = "$baseUrl/$exeName#/WindowsOptimizer.exe"
-            hash = $hash
+            url  = "$baseUrl/$portableName"
+            hash = $portableHash
         }
     }
-    shortcuts    = @(, @('WindowsOptimizer.exe', 'Windows Optimizer'))
+    # The zip's launcher is named after --packTitle; it starts current\WindowsOptimizer.exe.
+    shortcuts    = @(, @('Windows Optimizer.exe', 'Windows Optimizer'))
     checkver     = 'github'
     autoupdate   = [ordered]@{
         architecture = [ordered]@{
             '64bit' = [ordered]@{
-                url  = "https://github.com/$Repo/releases/download/v`$version/WindowsOptimizer-v`$version-win-x64.exe#/WindowsOptimizer.exe"
+                url  = "https://github.com/$Repo/releases/download/v`$version/$portableName"
                 hash = [ordered]@{ url = '$baseurl.sha256' }
             }
         }
@@ -59,7 +68,7 @@ $bucket = Join-Path $root 'bucket'
 New-Item -ItemType Directory -Path $bucket -Force | Out-Null
 $scoop | ConvertTo-Json -Depth 8 | Set-Content (Join-Path $bucket 'windows-optimizer.json') -Encoding UTF8
 
-# --- winget --------------------------------------------------------------------------------------
+# --- winget: the installer. Velopack installs per user, without admin rights, and takes --silent. --------------------------------------------------------------------------------------
 $id = 'plastina.WindowsOptimizer'
 $dir = Join-Path $root "packaging\winget\manifests\p\plastina\WindowsOptimizer\$Version"
 New-Item -ItemType Directory -Path $dir -Force | Out-Null
@@ -81,14 +90,21 @@ PackageVersion: $Version
 Platform:
 - Windows.Desktop
 MinimumOSVersion: 10.0.17763.0
-InstallerType: portable
-Commands:
-- windows-optimizer
+InstallerType: exe
+Scope: user
+InstallModes:
+- interactive
+- silent
+InstallerSwitches:
+  Silent: --silent
+  SilentWithProgress: --silent
+UpgradeBehavior: install
+ProductCode: plastina.WindowsOptimizer
 ReleaseDate: $releaseDate
 Installers:
 - Architecture: x64
-  InstallerUrl: $baseUrl/$exeName
-  InstallerSha256: $($hash.ToUpperInvariant())
+  InstallerUrl: $baseUrl/$setupName
+  InstallerSha256: $($setupHash.ToUpperInvariant())
 ManifestType: installer
 ManifestVersion: $schema
 "@ | Set-Content (Join-Path $dir "$id.installer.yaml") -Encoding UTF8
@@ -122,4 +138,4 @@ Get-ChildItem (Split-Path $dir -Parent) -Directory | Where-Object Name -ne $Vers
 
 Write-Host "Scoop manifest:  bucket\windows-optimizer.json"
 Write-Host "winget manifest: $dir"
-Write-Host "SHA-256: $hash"
+Write-Host "SHA-256: $setupName $setupHash, $portableName $portableHash"

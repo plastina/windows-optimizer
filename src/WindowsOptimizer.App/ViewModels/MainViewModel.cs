@@ -11,16 +11,36 @@ namespace WindowsOptimizer.App.ViewModels;
 
 public sealed class CategoryViewModel : ObservableObject
 {
-    public CategoryViewModel(string title, string blurb, IReadOnlyList<TweakViewModel> tweaks)
+    public CategoryViewModel(string title, string blurb, ObservableCollection<TweakViewModel> tweaks, PageKind kind = PageKind.Tweaks)
     {
         Title = title;
         Blurb = blurb;
         Tweaks = tweaks;
+        Kind = kind;
+        Tweaks.CollectionChanged += (_, _) => Raise(nameof(ShowsEmptyGames), nameof(CountText));
     }
 
     public string Title { get; }
     public string Blurb { get; }
-    public IReadOnlyList<TweakViewModel> Tweaks { get; }
+    public ObservableCollection<TweakViewModel> Tweaks { get; }
+    public PageKind Kind { get; }
+
+    /// <summary>Tweaks that can't be used on this PC, listed under "Not available on this PC" with the reason.</summary>
+    public ObservableCollection<TweakViewModel> Unavailable { get; } = new();
+    public bool HasUnavailable => Unavailable.Count > 0;
+
+    /// <summary>The AI apps installed for this user (only on the "AI and Copilot" page).</summary>
+    public ObservableCollection<AiAppViewModel> AiApps { get; } = new();
+    public bool ShowsAiApps { get; init; }
+    public bool NoAiApps => ShowsAiApps && AiApps.Count == 0;
+
+    public void NotifyListsChanged() => Raise(nameof(HasUnavailable), nameof(NoAiApps));
+
+    public bool ShowsTweaks => Kind is PageKind.Tweaks or PageKind.Games;
+    public bool IsHealth => Kind == PageKind.Health;
+    public bool IsMeasure => Kind == PageKind.Measure;
+    public bool IsGames => Kind == PageKind.Games;
+    public bool ShowsEmptyGames => IsGames && Tweaks.Count == 0;
 
     /// <summary>"3/5": how many of the tweaks that report a state are applied. Empty when none do.</summary>
     public string CountText
@@ -44,9 +64,11 @@ public sealed class MainViewModel : ObservableObject
         [TweakCategory.Updates] = ("Updates", "Control when and what Windows Update installs."),
         [TweakCategory.Power] = ("Power", "Steady performance, without the PC turning off the screen or sleeping mid-game."),
         [TweakCategory.Gaming] = ("Gaming", "Priority for the game and less running behind it."),
+        [TweakCategory.GameProfiles] = ("Your games", "Settings for one game at a time. Add a game's .exe and choose what to change for it."),
         [TweakCategory.Appearance] = ("Appearance", "Theme, date and time, taskbar and Start menu."),
         [TweakCategory.Language] = ("Language and region", "Display language, region and keyboard."),
         [TweakCategory.Network] = ("Network", "DNS servers of the network adapters."),
+        [TweakCategory.AI] = ("AI and Copilot", "Turn off the AI features Windows puts in the system and its apps, and remove the AI apps that came with it."),
         [TweakCategory.Startup] = ("Startup programs", "Apps that start with Windows. Turning one off keeps it installed; you can still open it yourself."),
         [TweakCategory.Privacy] = ("Cleanup and privacy", "Fewer suggestions, less history and fewer apps you didn't ask for."),
         [TweakCategory.System] = ("System", "Restore point, disk maintenance and sign-in."),
@@ -62,9 +84,12 @@ public sealed class MainViewModel : ObservableObject
     private string _lastMessage = "Reading the current Windows state…";
     private string _logText = "";
     private readonly AppSettings _settings;
+    private readonly GameLibrary _games;
     private bool _hasUpdate;
     private string _updateText = "";
     private string _updateUrl = UpdateChecker.ReleasesPage;
+    private bool _updateDownloaded;
+    private string _updateButtonText = "Download";
 
     public MainViewModel(TweakEngine engine, AppSettings settings)
     {
@@ -75,20 +100,58 @@ public sealed class MainViewModel : ObservableObject
 
         _restorePoint = engine.Tweaks.FirstOrDefault(t => t.Id == RestorePointId);
 
-        AllTweaks = engine.Tweaks
-            .Where(t => t.IsAvailable())
-            .Select(t => new TweakViewModel(t, this))
+        // Ask once whether each tweak applies to this PC; the ones that don't are kept to be listed with their reason.
+        var availability = engine.Tweaks.Select(t => (Tweak: t, Available: t.IsAvailable())).ToList();
+        AllTweaks = new ObservableCollection<TweakViewModel>(
+            availability.Where(a => a.Available).Select(a => new TweakViewModel(a.Tweak, this)));
+        var unavailableTweaks = availability.Where(a => !a.Available && a.Tweak.UnavailableReason is not null)
+            .Select(a => new TweakViewModel(a.Tweak, this, unavailable: true))
             .ToList();
 
-        var everything = new CategoryViewModel("All tweaks", "Everything the app can change, in category order.", AllTweaks);
-        Categories.Add(everything);
-        foreach (var group in AllTweaks.GroupBy(t => t.Category).OrderBy(g => g.Key))
+        var context = engine.Context ?? throw new InvalidOperationException("The engine has no context.");
+        Health = new HealthViewModel(context);
+        Measure = new MeasureViewModel(context);
+        _games = new GameLibrary(context.DataRoot);
+
+        Categories.Add(new CategoryViewModel("All tweaks", "Everything the app can change, in category order.", AllTweaks));
+        Categories.Add(new CategoryViewModel("PC health check",
+            "Looks for what costs the most performance and no tweak can fix: refresh rate, memory speed, drivers, drives.", new(), PageKind.Health));
+        Categories.Add(new CategoryViewModel("Before and after",
+            "Take a snapshot, apply tweaks, take another and see what really changed.", new(), PageKind.Measure));
+
+        // Categories follow the enum order. "Your games" is always listed, even when empty, so there is a place to add one.
+        foreach (var category in Enum.GetValues<TweakCategory>())
         {
-            var (title, blurb) = CategoryText[group.Key];
-            Categories.Add(new CategoryViewModel(title, blurb, group.ToList()));
+            var tweaks = new ObservableCollection<TweakViewModel>(AllTweaks.Where(t => t.Category == category));
+            if (tweaks.Count == 0 && category != TweakCategory.GameProfiles) continue;
+
+            var (title, blurb) = CategoryText[category];
+            var page = new CategoryViewModel(title, blurb, tweaks, category == TweakCategory.GameProfiles ? PageKind.Games : PageKind.Tweaks)
+            {
+                ShowsAiApps = category == TweakCategory.AI,
+            };
+            foreach (var tweak in unavailableTweaks.Where(t => t.Category == category)) page.Unavailable.Add(tweak);
+            Categories.Add(page);
         }
 
+        // A category whose tweaks are all unavailable (say, only an app that isn't installed) would be skipped above.
+        foreach (var group in unavailableTweaks.GroupBy(t => t.Category).Where(g => Categories.All(c => c.ShowsTweaks == false || c.Title != CategoryText[g.Key].Title)))
+        {
+            var (title, blurb) = CategoryText[group.Key];
+            var page = new CategoryViewModel(title, blurb, new ObservableCollection<TweakViewModel>());
+            foreach (var tweak in group) page.Unavailable.Add(tweak);
+            Categories.Add(page);
+        }
+
+        RestartExplorerCommand = new AsyncCommand(RestartExplorerAsync);
+        DismissExplorerCommand = new AsyncCommand(() =>
+        {
+            ExplorerRestartNeeded = false;
+            return Task.CompletedTask;
+        });
+
         _selected = Categories[0];
+        AddGameCommand = new AsyncCommand(AddGameAsync);
         CycleThemeCommand = new AsyncCommand(() =>
         {
             // System -> Light -> Dark -> System
@@ -100,7 +163,8 @@ public sealed class MainViewModel : ObservableObject
         });
         OpenUpdateCommand = new AsyncCommand(() =>
         {
-            Process.Start(new ProcessStartInfo(_updateUrl) { UseShellExecute = true });
+            if (_updateDownloaded) UpdateChecker.RestartToUpdate();
+            else Process.Start(new ProcessStartInfo(_updateUrl) { UseShellExecute = true });
             return Task.CompletedTask;
         });
         DismissUpdateCommand = new AsyncCommand(() =>
@@ -118,7 +182,78 @@ public sealed class MainViewModel : ObservableObject
     }
 
     public TweakEngine Engine { get; }
-    public IReadOnlyList<TweakViewModel> AllTweaks { get; }
+    public ObservableCollection<TweakViewModel> AllTweaks { get; }
+    public HealthViewModel Health { get; }
+    public MeasureViewModel Measure { get; }
+    public ICommand AddGameCommand { get; }
+    public ICommand RestartExplorerCommand { get; private set; } = null!;
+    public ICommand DismissExplorerCommand { get; private set; } = null!;
+
+    private bool _explorerRestartNeeded;
+
+    /// <summary>A tweak was changed that only shows after File Explorer restarts.</summary>
+    public bool ExplorerRestartNeeded
+    {
+        get => _explorerRestartNeeded;
+        private set => Set(ref _explorerRestartNeeded, value);
+    }
+
+    public void NoteExplorerRestartNeeded() => ExplorerRestartNeeded = true;
+
+    /// <summary>
+    /// Restarts the taskbar and desktop. It asks first (open File Explorer windows close), kills explorer.exe, and
+    /// lets Windows bring the shell back by itself; if that doesn't happen, it starts it as a normal (not elevated) user.
+    /// </summary>
+    private async Task RestartExplorerAsync()
+    {
+        if (MessageBox.Show("File Explorer windows will close and the taskbar will blink for a moment. Restart Explorer now?",
+                "Restart Explorer", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+
+        await Task.Run(() =>
+        {
+            foreach (var process in Process.GetProcessesByName("explorer"))
+            {
+                try { process.Kill(); } catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception) { }
+                process.Dispose();
+            }
+
+            // Windows normally relaunches the shell on its own within a few seconds.
+            for (var i = 0; i < 20 && Process.GetProcessesByName("explorer").Length == 0; i++) Thread.Sleep(300);
+
+            if (Process.GetProcessesByName("explorer").Length == 0)
+            {
+                // "trustlevel 0x20000" starts it without this app's administrator rights, as the shell should run.
+                Process.Start(new ProcessStartInfo("runas.exe", "/trustlevel:0x20000 explorer.exe") { UseShellExecute = false, CreateNoWindow = true });
+            }
+        });
+
+        ExplorerRestartNeeded = false;
+        LastMessage = "Explorer restarted.";
+    }
+
+    /// <summary>Looks up the AI apps installed for this user (a PowerShell call, so off the UI thread).</summary>
+    public async Task LoadAiAppsAsync()
+    {
+        var page = Categories.FirstOrDefault(c => c.ShowsAiApps);
+        if (page is null) return;
+
+        var apps = await Task.Run(() => InstalledAiApps.List(Engine.Context!));
+        page.AiApps.Clear();
+        foreach (var app in apps) page.AiApps.Add(new AiAppViewModel(app, this));
+        page.NotifyListsChanged();
+    }
+
+    public async Task RemoveAiAppAsync(AiApp app)
+    {
+        if (MessageBox.Show($"Remove {app.DisplayName}? You can install it again from the Microsoft Store.",
+                "Remove app", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+
+        LastMessage = $"Removing {app.DisplayName}…";
+        var result = await Task.Run(() => InstalledAiApps.Remove(Engine.Context!, app));
+        Engine.Write($"{(result.Success ? "OK" : "Failed")}: remove {app.DisplayName} — {result.Message}");
+        if (!result.Success) MessageBox.Show(result.Message, "Remove app", MessageBoxButton.OK, MessageBoxImage.Warning);
+        await LoadAiAppsAsync();
+    }
     public ObservableCollection<CategoryViewModel> Categories { get; } = new();
     public bool IsAdmin { get; }
     public bool ShowAdminBanner => !IsAdmin;
@@ -158,8 +293,18 @@ public sealed class MainViewModel : ObservableObject
     public void ShowUpdate(ReleaseInfo release)
     {
         _updateUrl = release.Url;
-        UpdateText = $"Version {release.Version} is available (you have {UpdateChecker.CurrentVersion}).";
+        _updateDownloaded = release.Downloaded;
+        UpdateText = release.Downloaded
+            ? $"Version {release.Version} is downloaded (you have {UpdateChecker.CurrentVersion}). It installs when you close the app, or restart now."
+            : $"Version {release.Version} is available (you have {UpdateChecker.CurrentVersion}).";
+        UpdateButtonText = release.Downloaded ? "Restart now" : "Download";
         HasUpdate = true;
+    }
+
+    public string UpdateButtonText
+    {
+        get => _updateButtonText;
+        private set => Set(ref _updateButtonText, value);
     }
 
     /// <summary>Looks for a newer release, if the user allows it. Never throws and never blocks the window.</summary>
@@ -173,7 +318,13 @@ public sealed class MainViewModel : ObservableObject
     public CategoryViewModel? Selected
     {
         get => _selected;
-        set => Set(ref _selected, value);
+        set
+        {
+            if (!Set(ref _selected, value)) return;
+
+            // The first time the health page opens it checks by itself; later it waits for "Check again".
+            if (value is { IsHealth: true } && !Health.HasRun) _ = Health.RunAsync();
+        }
     }
 
     public bool IsLoading
@@ -211,17 +362,103 @@ public sealed class MainViewModel : ObservableObject
         IsLoading = true;
         LastMessage = "Reading the current Windows state…";
 
-        var probes = await Task.Run(() => AllTweaks.Select(t => (Tweak: t, Probe: t.Probe())).ToList());
+        // Forget what was read about installed Windows components, so a refresh sees changes made elsewhere.
+        WindowsComponents.Invalidate(Engine.Context!);
+
+        var probes = await Task.Run(() => AllTweaks.ToList().Select(t => (Tweak: t, Probe: t.Probe())).ToList());
         foreach (var (tweak, probe) in probes) tweak.ApplyProbe(probe);
+
+        // A tweak that has a reason to be unavailable and whose state can't be read is one Windows doesn't have here
+        // (a component this edition lacks): move it to "Not available on this PC" instead of showing a dead switch.
+        foreach (var (tweak, probe) in probes.Where(p => p.Probe.Status == TweakStatus.Unknown && p.Tweak.Tweak.UnavailableReason is not null))
+        {
+            tweak.MarkUnavailable();
+            AllTweaks.Remove(tweak);
+            foreach (var category in Categories.Where(c => c.Tweaks.Contains(tweak)).ToList()) category.Tweaks.Remove(tweak);
+
+            var page = Categories.FirstOrDefault(c => c.Title == CategoryText[tweak.Category].Title);
+            if (page is not null && !page.Unavailable.Contains(tweak)) page.Unavailable.Add(tweak);
+        }
+        foreach (var category in Categories) category.NotifyListsChanged();
 
         RefreshCounts();
         IsLoading = false;
         LastMessage = $"{AllTweaks.Count} tweaks available.";
+
+        await LoadAiAppsAsync();
     }
 
     public void RefreshCounts()
     {
         foreach (var category in Categories) category.RefreshCount();
+    }
+
+    /// <summary>Asks for a game's .exe and adds its tweaks to "Your games".</summary>
+    private async Task AddGameAsync()
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Pick the game's .exe",
+            Filter = "Programs (*.exe)|*.exe",
+            CheckFileExists = true,
+        };
+        if (dialog.ShowDialog() != true) return;
+
+        await AddGameAsync(dialog.FileName);
+    }
+
+    public async Task AddGameAsync(string exePath)
+    {
+        if (_games.Add(exePath) is { } error)
+        {
+            MessageBox.Show(error, "Your games", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var gameCategory = Categories.First(c => c.IsGames);
+        foreach (var tweak in GameProfileTweaks.For(Engine.Context!, Path.GetFullPath(exePath)))
+        {
+            var view = new TweakViewModel(tweak, this);
+            view.ApplyProbe(await Task.Run(view.Probe));
+            AllTweaks.Add(view);
+            gameCategory.Tweaks.Add(view);
+        }
+
+        Selected = gameCategory;
+        LastMessage = $"Added {Path.GetFileNameWithoutExtension(exePath)}. Nothing changes until you press Apply.";
+    }
+
+    /// <summary>Undoes what the app applied for a game, then forgets the game.</summary>
+    public async Task RemoveGameAsync(string gamePath)
+    {
+        var game = Path.GetFileNameWithoutExtension(gamePath);
+        var tweaks = AllTweaks.Where(t => t.Tweak is IGameTweak g && string.Equals(g.GamePath, gamePath, StringComparison.OrdinalIgnoreCase)).ToList();
+        var applied = tweaks.Where(t => t.CanUndoNow).ToList();
+
+        var question = applied.Count == 0
+            ? $"Remove {game} from the list?"
+            : $"Remove {game}? The {applied.Count} change(s) the app made for it will be undone first.";
+        if (MessageBox.Show(question, "Your games", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+
+        foreach (var tweak in applied)
+        {
+            var result = await Task.Run(() => Engine.Undo(tweak.Tweak));
+            if (!result.Success)
+            {
+                MessageBox.Show($"Could not undo \"{tweak.Name}\": {result.Message}\n\n{game} stays in the list.", "Your games");
+                return;
+            }
+        }
+
+        _games.Remove(gamePath);
+        var gameCategory = Categories.First(c => c.IsGames);
+        foreach (var tweak in tweaks)
+        {
+            AllTweaks.Remove(tweak);
+            gameCategory.Tweaks.Remove(tweak);
+        }
+        RefreshCounts();
+        LastMessage = $"Removed {game}.";
     }
 
     /// <summary>Creates a restore point once per session, before the first change, if the user wants one.</summary>

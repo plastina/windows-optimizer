@@ -11,16 +11,22 @@
     <Product>Windows Optimizer</Product>
     <!-- Local builds only; the pipeline overrides it with <version.txt>.<run number>. -->
     <Version>0.2.0</Version>
-  </PropertyGroup>
-
-  <!-- Release builds ask for administrator rights (the tweaks write to HKLM). Debug builds don't,
-       so the app can be started from the IDE and in screenshots without a UAC prompt. -->
-  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <!-- Program.Main runs Velopack's install/update hooks before WPF starts, so App.xaml isn't the entry point. -->
+    <StartupObject>WindowsOptimizer.App.Program</StartupObject>
+    <!-- "asInvoker": Release builds ask for administrator rights themselves at start (see Program.cs).
+         Debug builds don't, so the app can be started from the IDE and in screenshots without a UAC prompt. -->
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)' != 'Release'">
-    <ApplicationManifest>app.debug.manifest</ApplicationManifest>
-  </PropertyGroup>
+
+  <ItemGroup>
+    <ApplicationDefinition Remove="App.xaml" />
+    <Page Include="App.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Installer and automatic updates. The pipeline's vpk tool must be the same version. -->
+    <PackageReference Include="Velopack" Version="1.2.161" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\WindowsOptimizer.Core\WindowsOptimizer.Core.csproj" />

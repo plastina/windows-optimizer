@@ -27,6 +27,7 @@ public sealed class StartupEntryTweak : TweakBase
         _display = display;
         _command = command;
         Origin = origin;
+        NeedsAdmin = hive == RegHive.LocalMachine;
     }
 
     /// <summary>Where the entry comes from, e.g. "Current user" or "All users (Startup folder)".</summary>

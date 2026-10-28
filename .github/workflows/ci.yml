@@ -1,11 +1,12 @@
 name: CI and release
 
-# Every push to main builds, tests and, if the tests pass, publishes a GitHub release with a single
-# WindowsOptimizer.exe. The version is "<version.txt>.<run number>", for example 0.2.7: edit version.txt to
+# Every push to main builds, tests and, if the tests pass, publishes a GitHub release with an installer
+# (WindowsOptimizer-win-Setup.exe), a portable zip and the Velopack packages that installed copies update
+# themselves from. The version is "<version.txt>.<run number>", for example 0.2.7: edit version.txt to
 # move to 0.3, 1.0 and so on. Pull requests only build and test. You can also run it by hand (Actions tab).
-# A release created by hand on GitHub (Releases > Draft a new release) also gets the exe: it is built from
+# A release created by hand on GitHub (Releases > Draft a new release) gets the same files: they are built from
 # that release's tag, versioned after it (v1.2.3 -> 1.2.3), and attached to the release you published.
-# If the SIGNPATH_ORGANIZATION_ID repository variable is set, the exe is code-signed first (see packaging/SIGNING.md).
+# If the SIGNPATH_ORGANIZATION_ID repository variable is set, the app's exe is code-signed first (see packaging/SIGNING.md).
 on:
   push:
     branches: [main]
@@ -70,28 +71,23 @@ jobs:
             if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "version.txt must hold MAJOR.MINOR (for example 0.2); got '$base'." }
           }
           "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          "EXE_NAME=WindowsOptimizer-v$version-win-x64.exe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "TAG=v$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           Write-Host "Releasing $version"
 
-      - name: Publish single-file executable
+      # A plain folder, not a single file: Velopack updates only the files that changed (delta packages).
+      - name: Publish the app
         shell: pwsh
-        run: |
-          dotnet publish src/WindowsOptimizer.App -c Release -r win-x64 --self-contained true `
-            -p:PublishSingleFile=true `
-            -p:IncludeNativeLibrariesForSelfExtract=true `
-            -p:EnableCompressionInSingleFile=true `
-            -p:Version=$env:VERSION `
-            -o publish
-          Move-Item publish/WindowsOptimizer.exe "publish/$env:EXE_NAME"
+        run: dotnet publish src/WindowsOptimizer.App -c Release -r win-x64 --self-contained true -p:Version=$env:VERSION -o publish
 
       # --- Optional code signing with SignPath (free for open-source projects) ---
+      # Signs the app's own exe before it goes into the installer. Setup.exe and Velopack's Update.exe are not signed yet.
       - name: Upload the unsigned executable
         id: unsigned
         if: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: unsigned-executable
-          path: publish/${{ env.EXE_NAME }}
+          path: publish/WindowsOptimizer.exe
 
       - name: Sign with SignPath
         if: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' }}
@@ -108,34 +104,61 @@ jobs:
       - name: Use the signed executable
         if: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' }}
         shell: pwsh
-        run: Copy-Item "signed/$env:EXE_NAME" "publish/$env:EXE_NAME" -Force
+        run: Copy-Item signed/WindowsOptimizer.exe publish/WindowsOptimizer.exe -Force
 
-      # The checksum is of the file people will actually download, so it comes after signing.
-      - name: Write the checksum
+      # --- Installer and update packages (Velopack) ---
+      # vpk must be the same version as the Velopack package in WindowsOptimizer.App.csproj.
+      - name: Install vpk
+        run: dotnet tool install -g vpk --version 1.2.161
+
+      # The previous release lets vpk build a delta package, so installed copies download only what changed.
+      # The first Velopack release has nothing to download, which is fine.
+      - name: Download the previous release
+        continue-on-error: true
+        run: vpk download github --repoUrl https://github.com/${{ github.repository }} --token ${{ github.token }} -o releases
+
+      - name: Build the installer
+        run: >
+          vpk pack --packId plastina.WindowsOptimizer --packVersion ${{ env.VERSION }} --packDir publish
+          --mainExe WindowsOptimizer.exe --packTitle "Windows Optimizer" --packAuthors plastina -o releases
+
+      # Only this version's files: the download above also left the previous full package in the folder.
+      # The pack id is also the install folder (%LocalAppData%\plastina.WindowsOptimizer), kept apart from the
+      # app's own settings folder. Setup and the zip get shorter names; the updater only reads the .nupkg names.
+      # The checksums are of the files people actually download, so they come after signing.
+      - name: List the release files
         shell: pwsh
         run: |
-          $hash = (Get-FileHash "publish/$env:EXE_NAME" -Algorithm SHA256).Hash.ToLower()
-          "$hash  $env:EXE_NAME" | Out-File "publish/$env:EXE_NAME.sha256" -Encoding ascii
+          $assets = foreach ($name in (Get-Content releases/assets.win.json -Raw | ConvertFrom-Json).RelativeFileName) {
+            if ($name -like '*.nupkg') { $name; continue }
+            $short = $name -replace '^plastina\.', ''
+            Move-Item "releases/$name" "releases/$short" -Force
+            $short
+          }
+          foreach ($name in @($assets | Where-Object { $_ -notlike '*.nupkg' })) {
+            $hash = (Get-FileHash "releases/$name" -Algorithm SHA256).Hash.ToLower()
+            "$hash  $name" | Out-File "releases/$name.sha256" -Encoding ascii
+            $assets += "$name.sha256"
+          }
+          $files = @($assets) + 'releases.win.json', 'RELEASES' | ForEach-Object { "releases/$_" }
+          $files | Out-File release-files.txt -Encoding utf8
+          $files
 
       - name: Create the release
         if: ${{ github.event_name != 'release' }}
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ env.VERSION }}
+          tag_name: ${{ env.TAG }}
           target_commitish: ${{ github.sha }}
           name: Windows Optimizer ${{ env.VERSION }}
-          files: |
-            publish/*.exe
-            publish/*.sha256
           generate_release_notes: true
 
-      # The release already exists, with your title and notes, so only the files are added to it.
-      - name: Attach the executable to the published release
-        if: ${{ github.event_name == 'release' }}
+      # A release made by hand keeps your title and notes; only the files are added to it.
+      - name: Attach the installer and update packages
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "publish/$env:EXE_NAME" "publish/$env:EXE_NAME.sha256" --clobber --repo "${{ github.repository }}"
+        run: gh release upload $env:TAG @(Get-Content release-files.txt) --clobber --repo "${{ github.repository }}"
 
       # Keeps `scoop install` and the winget manifests pointing at the release that was just published.
       # A failure here must not undo the release, so it is allowed to fail. Pushes made with GITHUB_TOKEN

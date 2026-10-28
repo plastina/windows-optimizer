@@ -1,6 +1,6 @@
 namespace WindowsOptimizer.Core;
 
-public enum TweakCategory { Updates, Power, Gaming, Appearance, Language, Network, Startup, Privacy, System }
+public enum TweakCategory { Updates, Power, Gaming, GameProfiles, Appearance, Language, Network, Startup, AI, Privacy, System }
 
 public enum RiskLevel { Low, Medium, High }
 
@@ -27,6 +27,24 @@ public interface ITweak
     RiskLevel Risk { get; }
     TweakKind Kind { get; }
     bool NeedsRestart { get; }
+
+    /// <summary>Changing it needs administrator rights (HKLM values, services, system commands).</summary>
+    bool RequiresAdmin { get; }
+
+    /// <summary>The change only shows after File Explorer (the taskbar and desktop shell) restarts.</summary>
+    bool RestartsExplorer { get; }
+
+    /// <summary>Worth turning on for most people: low risk and a clear benefit.</summary>
+    bool Recommended { get; }
+
+    /// <summary>Not widely tested or documented: it may do nothing on some builds of Windows.</summary>
+    bool Experimental { get; }
+
+    /// <summary>Running it can take minutes (it installs or removes a Windows component).</summary>
+    bool SlowOperation { get; }
+
+    /// <summary>Why <see cref="IsAvailable"/> is false (an app that isn't installed, hardware that is missing...).</summary>
+    string? UnavailableReason { get; }
 
     /// <summary>Shown before running when the tweak is risky or cannot be undone.</summary>
     string? Warning { get; }

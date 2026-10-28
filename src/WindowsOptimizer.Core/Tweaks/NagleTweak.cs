@@ -14,6 +14,7 @@ public sealed class NagleTweak : RegistryTweak
             TweakCategory.Gaming, RiskLevel.Low,
             EditsFor(ctx))
     {
+        UnavailableReason = "No network interface on this PC has an IP address.";
     }
 
     /// <summary>Hidden on machines where no interface has an address (nothing to change).</summary>

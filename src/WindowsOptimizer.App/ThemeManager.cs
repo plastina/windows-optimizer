@@ -22,6 +22,7 @@ public static class ThemeManager
         ["PartialBrush"] = "#D69E2E", ["PartialTextBrush"] = "#8A5A00", ["DangerTextBrush"] = "#B83A1B",
         ["FocusBrush"] = "#2F6FED", ["DisabledBgBrush"] = "#D3D9DF", ["DisabledFgBrush"] = "#6F7B86",
         ["BannerBgBrush"] = "#FFF4D6", ["BannerLineBrush"] = "#E3C469", ["ScrollThumbBrush"] = "#B5BEC7",
+        ["InfoTextBrush"] = "#2456B8",
     };
 
     private static readonly Dictionary<string, string> Dark = new()
@@ -33,6 +34,7 @@ public static class ThemeManager
         ["PartialBrush"] = "#D8A53A", ["PartialTextBrush"] = "#E3B95A", ["DangerTextBrush"] = "#FF9276",
         ["FocusBrush"] = "#6FA0FF", ["DisabledBgBrush"] = "#34404B", ["DisabledFgBrush"] = "#8593A0",
         ["BannerBgBrush"] = "#3B3320", ["BannerLineBrush"] = "#8A7430", ["ScrollThumbBrush"] = "#4F5E6C",
+        ["InfoTextBrush"] = "#7FA8FF",
     };
 
     [DllImport("dwmapi.dll")]

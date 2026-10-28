@@ -14,6 +14,9 @@ public sealed class TweakEngine
 
     public IReadOnlyList<ITweak> Tweaks { get; }
 
+    /// <summary>What the tweaks work with. The app uses it to build tweaks added later, such as a new game's.</summary>
+    public TweakContext? Context { get; init; }
+
     public event Action<string>? Logged;
 
     public static string DataRoot => StateStore.DefaultRoot;
@@ -26,7 +29,7 @@ public sealed class TweakEngine
             new StateStore(Path.Combine(root, "state")),
             new CommandRunner(),
             root);
-        return new TweakEngine(TweakCatalog.Create(context), Path.Combine(root, "windows-optimizer.log"));
+        return new TweakEngine(TweakCatalog.Create(context), Path.Combine(root, "windows-optimizer.log")) { Context = context };
     }
 
     public TweakResult Apply(ITweak tweak) => Run(tweak, "Applying", tweak.Apply);

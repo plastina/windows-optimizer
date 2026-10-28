@@ -2,7 +2,7 @@ using Microsoft.Win32;
 
 namespace WindowsOptimizer.Core;
 
-public enum RegHive { CurrentUser, LocalMachine }
+public enum RegHive { CurrentUser, LocalMachine, Users }
 
 public enum RegKind { DWord, String }
 
@@ -38,7 +38,12 @@ public interface IRegistryAccess
 public sealed class WindowsRegistry : IRegistryAccess
 {
     private static RegistryKey Root(RegHive hive) =>
-        hive == RegHive.CurrentUser ? Registry.CurrentUser : Registry.LocalMachine;
+        hive switch
+        {
+            RegHive.CurrentUser => Registry.CurrentUser,
+            RegHive.Users => Registry.Users,
+            _ => Registry.LocalMachine,
+        };
 
     public bool KeyExists(RegHive hive, string subKey)
     {

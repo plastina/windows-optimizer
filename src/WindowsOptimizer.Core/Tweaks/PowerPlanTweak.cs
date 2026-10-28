@@ -31,6 +31,7 @@ public sealed class PowerPlanTweak : TweakBase
             "Turns on the highest-performance plan and keeps the screen, sleep and hibernation from turning the PC off while it is plugged in.",
             TweakCategory.Power, RiskLevel.Low)
     {
+        NeedsAdmin = true;
     }
 
     public override TweakStatus GetStatus()

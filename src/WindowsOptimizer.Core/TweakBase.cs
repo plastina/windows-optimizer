@@ -27,6 +27,15 @@ public abstract class TweakBase : ITweak
     public bool NeedsRestart { get; init; }
     public string? Warning { get; init; }
 
+    /// <summary>Set for tweaks that run commands or services; registry tweaks work it out from their edits.</summary>
+    public bool NeedsAdmin { get; init; }
+    public virtual bool RequiresAdmin => NeedsAdmin;
+    public bool RestartsExplorer { get; init; }
+    public bool Recommended { get; set; }
+    public bool Experimental { get; init; }
+    public bool SlowOperation { get; init; }
+    public string? UnavailableReason { get; set; }
+
     public virtual bool IsAvailable() => true;
     public abstract TweakStatus GetStatus();
     public virtual string? Fingerprint() => null;

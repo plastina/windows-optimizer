@@ -31,7 +31,10 @@ public static class CleanupTweaks
                 var (files, bytes) = Measure(f.Path, MinimumAge);
                 return new PreviewLine(f.Label, $"{FormatBytes(bytes)} in {files:N0} file(s)", "removed", f.Path);
             })
-            .ToList());
+            .ToList())
+    {
+        NeedsAdmin = true,
+    };
 
     public static ITweak UpdateCache(TweakContext c)
     {
@@ -65,7 +68,10 @@ public static class CleanupTweaks
             {
                 var (files, bytes) = Measure(folder, TimeSpan.Zero);
                 return new[] { new PreviewLine("Downloaded update files", $"{FormatBytes(bytes)} in {files:N0} file(s)", "removed", folder) };
-            });
+            })
+        {
+            NeedsAdmin = true,
+        };
     }
 
     private static IEnumerable<(string Label, string Path)> TempFolders()

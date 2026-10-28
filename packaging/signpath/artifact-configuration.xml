@@ -6,7 +6,7 @@
 -->
 <artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
   <zip-file>
-    <pe-file path="WindowsOptimizer-*-win-x64.exe">
+    <pe-file path="WindowsOptimizer.exe">
       <authenticode-sign/>
     </pe-file>
   </zip-file>

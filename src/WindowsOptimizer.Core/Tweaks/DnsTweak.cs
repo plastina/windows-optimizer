@@ -20,6 +20,7 @@ public sealed class DnsTweak : TweakBase
             "Uses 8.8.8.8 and 8.8.4.4 (and the IPv6 equivalents) on the active network adapters. It can speed up name resolution but does not lower game ping.",
             TweakCategory.Network, RiskLevel.Low)
     {
+        NeedsAdmin = true;
     }
 
     public override TweakStatus GetStatus()

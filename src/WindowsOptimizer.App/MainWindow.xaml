@@ -14,6 +14,15 @@
         <DataTemplate DataType="{x:Type vm:TweakViewModel}">
             <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource LineBrush}"
                     BorderThickness="1" CornerRadius="5" Margin="0,0,0,10" ClipToBounds="True">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsUnavailable}" Value="True">
+                                <Setter Property="Opacity" Value="0.65"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="6"/>
@@ -46,69 +55,96 @@
                             <StackPanel Grid.Column="0" Margin="0,0,24,0">
                                 <TextBlock Text="{Binding Name}" FontFamily="{StaticResource DisplayFont}"
                                            FontSize="17" TextWrapping="Wrap"/>
-                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                    <TextBlock Text="{Binding RiskText}">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock" BasedOn="{StaticResource MetaText}">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Risk}" Value="High">
-                                                        <Setter Property="Foreground" Value="{DynamicResource DangerTextBrush}"/>
-                                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding Risk}" Value="Medium">
-                                                        <Setter Property="Foreground" Value="{DynamicResource PartialTextBrush}"/>
-                                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
-                                    <TextBlock Text="{Binding StatusText}" Margin="16,0,0,0"
-                                               Visibility="{Binding HasStatus, Converter={StaticResource BoolToVisibility}}">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock" BasedOn="{StaticResource MetaText}">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Status}" Value="Applied">
-                                                        <Setter Property="Foreground" Value="{DynamicResource AppliedTextBrush}"/>
-                                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding Status}" Value="Partial">
-                                                        <Setter Property="Foreground" Value="{DynamicResource PartialTextBrush}"/>
-                                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
-                                    <TextBlock Text="Needs a PC restart" Style="{StaticResource MetaText}" Margin="16,0,0,0"
-                                               Visibility="{Binding NeedsRestart, Converter={StaticResource BoolToVisibility}}"/>
-                                </StackPanel>
+                                <WrapPanel Margin="0,6,0,0">
+                                    <Border Style="{StaticResource Chip}" BorderBrush="{DynamicResource DangerTextBrush}"
+                                            Visibility="{Binding IsHighRisk, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Style="{StaticResource ChipText}" Text="High risk" Foreground="{DynamicResource DangerTextBrush}"/>
+                                    </Border>
+                                    <Border Style="{StaticResource Chip}" BorderBrush="{DynamicResource PartialTextBrush}"
+                                            Visibility="{Binding IsMediumRisk, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Style="{StaticResource ChipText}" Text="Medium risk" Foreground="{DynamicResource PartialTextBrush}"/>
+                                    </Border>
+                                    <Border Style="{StaticResource Chip}" BorderBrush="{DynamicResource AppliedTextBrush}"
+                                            Visibility="{Binding IsRecommended, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Style="{StaticResource ChipText}" Text="Recommended" Foreground="{DynamicResource AppliedTextBrush}"/>
+                                    </Border>
+                                    <Border Style="{StaticResource Chip}" BorderBrush="{DynamicResource PartialTextBrush}"
+                                            Visibility="{Binding IsExperimental, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Style="{StaticResource ChipText}" Text="Experimental" Foreground="{DynamicResource PartialTextBrush}"/>
+                                    </Border>
+                                    <Border Style="{StaticResource Chip}" BorderBrush="{DynamicResource PartialTextBrush}"
+                                            Visibility="{Binding IsSlow, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Style="{StaticResource ChipText}" Text="Can take a few minutes" Foreground="{DynamicResource PartialTextBrush}"/>
+                                    </Border>
+                                    <Border Style="{StaticResource Chip}" BorderBrush="{DynamicResource InfoTextBrush}"
+                                            Visibility="{Binding RequiresAdmin, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Style="{StaticResource ChipText}" Text="Admin" Foreground="{DynamicResource InfoTextBrush}"/>
+                                    </Border>
+                                    <Border Style="{StaticResource Chip}" BorderBrush="{DynamicResource PartialTextBrush}"
+                                            Visibility="{Binding RestartsExplorer, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Style="{StaticResource ChipText}" Text="Restarts Explorer" Foreground="{DynamicResource PartialTextBrush}"/>
+                                    </Border>
+                                    <Border Style="{StaticResource Chip}" BorderBrush="{DynamicResource PartialTextBrush}"
+                                            Visibility="{Binding NeedsRestart, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Style="{StaticResource ChipText}" Text="Restart PC" Foreground="{DynamicResource PartialTextBrush}"/>
+                                    </Border>
+                                    <Border Style="{StaticResource Chip}" BorderBrush="{DynamicResource PartialTextBrush}"
+                                            Visibility="{Binding IsPartial, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Style="{StaticResource ChipText}" Text="Partly on" Foreground="{DynamicResource PartialTextBrush}"/>
+                                    </Border>
+                                </WrapPanel>
                             </StackPanel>
 
                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
-                                <Button Content="Undo" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0"
-                                        Command="{Binding UndoCommand}" IsEnabled="{Binding CanUndoNow}"
-                                        Visibility="{Binding ShowUndo, Converter={StaticResource BoolToVisibility}}"
-                                        AutomationProperties.Name="{Binding Name, StringFormat=Undo: {0}}"/>
+                                <TextBlock Text="{Binding StateText}" VerticalAlignment="Center" Margin="0,0,10,0"
+                                           Visibility="{Binding ShowSwitch, Converter={StaticResource BoolToVisibility}}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource MetaText}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsOn}" Value="True">
+                                                    <Setter Property="Foreground" Value="{DynamicResource AppliedTextBrush}"/>
+                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <ToggleButton Style="{StaticResource SwitchToggle}" IsChecked="{Binding IsOn, Mode=TwoWay}"
+                                              IsEnabled="{Binding CanToggle}"
+                                              Visibility="{Binding ShowSwitch, Converter={StaticResource BoolToVisibility}}"
+                                              AutomationProperties.Name="{Binding Name}"/>
                                 <Button Content="{Binding ApplyLabel}" Style="{StaticResource PrimaryButton}"
-                                        Command="{Binding ApplyCommand}" IsEnabled="{Binding CanApply}"
-                                        AutomationProperties.Name="{Binding Name, StringFormat=Apply: {0}}"/>
+                                        Command="{Binding ApplyCommand}" IsEnabled="{Binding CanRun}"
+                                        Visibility="{Binding ShowRun, Converter={StaticResource BoolToVisibility}}"
+                                        AutomationProperties.Name="{Binding Name, StringFormat=Run: {0}}"/>
                             </StackPanel>
                         </Grid>
 
                         <TextBlock Text="{Binding Description}" TextWrapping="Wrap" MaxWidth="640" HorizontalAlignment="Left"
                                    Margin="0,10,0,0" LineHeight="19"/>
 
-                        <TextBlock Text="It was already like this before the app; there is no backup to undo."
-                                   Style="{StaticResource MetaText}" Margin="0,8,0,0"
-                                   Visibility="{Binding NoBackupNote, Converter={StaticResource BoolToVisibility}}"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0"
+                                    Visibility="{Binding NoBackupNote, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Text="&#xE72E;" FontFamily="Segoe MDL2 Assets" Style="{StaticResource MetaText}" Margin="0,2,6,0"/>
+                            <TextBlock Text="It was already on before this app, so there is no backup to switch it off here."
+                                       Style="{StaticResource MetaText}" TextWrapping="Wrap" MaxWidth="600"/>
+                        </StackPanel>
+
+                        <TextBlock Text="{Binding UnavailableReason}" Style="{StaticResource MetaText}" TextWrapping="Wrap"
+                                   MaxWidth="640" HorizontalAlignment="Left" Margin="0,8,0,0"
+                                   Visibility="{Binding IsUnavailable, Converter={StaticResource BoolToVisibility}}"/>
 
                         <TextBlock Text="{Binding Warning}" TextWrapping="Wrap" MaxWidth="640" HorizontalAlignment="Left"
                                    Margin="0,8,0,0" Foreground="{DynamicResource PartialTextBrush}"
                                    Visibility="{Binding HasWarning, Converter={StaticResource BoolToVisibility}}"/>
 
-                        <ToggleButton Content="See what changes" Style="{StaticResource LinkToggle}" HorizontalAlignment="Left"
-                                      Margin="-2,10,0,0" IsChecked="{Binding IsExpanded, Mode=TwoWay}"/>
+                        <StackPanel Orientation="Horizontal" Margin="-2,10,0,0" Visibility="{Binding IsUnavailable, Converter={StaticResource InverseBoolToVisibility}}">
+                            <ToggleButton Content="See what changes" Style="{StaticResource LinkToggle}"
+                                          IsChecked="{Binding IsExpanded, Mode=TwoWay}"/>
+                            <Button Content="Remove this game" Style="{StaticResource LinkButton}" Margin="16,0,0,0"
+                                    Command="{Binding RemoveGameCommand}"
+                                    Visibility="{Binding IsGameTweak, Converter={StaticResource BoolToVisibility}}"/>
+                        </StackPanel>
 
                         <Border Margin="0,8,0,0" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="4"
                                 Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVisibility}}">
@@ -171,6 +207,129 @@
                             </TextBlock.Style>
                         </TextBlock>
                     </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!-- An installed AI app, with a Remove button. -->
+        <DataTemplate DataType="{x:Type vm:AiAppViewModel}">
+            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource LineBrush}"
+                    BorderThickness="1" CornerRadius="5" Margin="0,0,0,10" Padding="20,14">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="{Binding DisplayName}" FontFamily="{StaticResource DisplayFont}" FontSize="16"/>
+                        <TextBlock Text="{Binding PackageName}" Style="{StaticResource DataText}" Foreground="{DynamicResource MutedBrush}" Margin="0,3,0,0"/>
+                    </StackPanel>
+                    <Button Grid.Column="1" Content="Remove" Style="{StaticResource SecondaryButton}" VerticalAlignment="Center"
+                            Command="{Binding RemoveCommand}" AutomationProperties.Name="{Binding DisplayName, StringFormat=Remove: {0}}"/>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!-- One line of the health check. The left edge says how serious it is. -->
+        <DataTemplate DataType="{x:Type vm:HealthItemViewModel}">
+            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource LineBrush}"
+                    BorderThickness="1" CornerRadius="5" Margin="0,0,0,10" ClipToBounds="True">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="6"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="{DynamicResource LineBrush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Level}" Value="Good">
+                                        <Setter Property="Background" Value="{DynamicResource AppliedBrush}"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Level}" Value="Attention">
+                                        <Setter Property="Background" Value="{DynamicResource PartialBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                    </Border>
+                    <StackPanel Grid.Column="1" Margin="20,14,20,14">
+                        <TextBlock Text="{Binding Title}" FontFamily="{StaticResource DisplayFont}" FontSize="16" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding LevelText}" Margin="0,3,0,0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource MetaText}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Level}" Value="Good">
+                                            <Setter Property="Foreground" Value="{DynamicResource AppliedTextBrush}"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Level}" Value="Attention">
+                                            <Setter Property="Foreground" Value="{DynamicResource PartialTextBrush}"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock Text="{Binding Detail}" TextWrapping="Wrap" MaxWidth="680" HorizontalAlignment="Left" Margin="0,8,0,0"/>
+                        <TextBlock Text="{Binding Advice}" TextWrapping="Wrap" MaxWidth="680" HorizontalAlignment="Left" Margin="0,8,0,0"
+                                   Foreground="{DynamicResource MutedBrush}"
+                                   Visibility="{Binding HasAdvice, Converter={StaticResource BoolToVisibility}}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!-- A saved measurement. -->
+        <DataTemplate DataType="{x:Type vm:SnapshotViewModel}">
+            <Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1" Padding="0,10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="{Binding Label}" FontFamily="{StaticResource DisplayFont}" FontSize="15"/>
+                        <TextBlock Text="{Binding When}" Style="{StaticResource MetaText}"/>
+                        <TextBlock Text="{Binding Summary}" Style="{StaticResource DataText}" Foreground="{DynamicResource MutedBrush}" Margin="0,4,0,0"/>
+                    </StackPanel>
+                    <Button Grid.Column="1" Content="Remove" Style="{StaticResource LinkButton}" VerticalAlignment="Top"
+                            Command="{Binding RemoveCommand}"/>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!-- One row of the before/after table. -->
+        <DataTemplate DataType="{x:Type core:ComparisonRow}">
+            <Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="150"/>
+                        <ColumnDefinition Width="150"/>
+                        <ColumnDefinition Width="150"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="{Binding Metric}" Margin="12,9" TextWrapping="Wrap"/>
+                    <TextBlock Grid.Column="1" Text="{Binding Before}" Style="{StaticResource DataText}" Foreground="{DynamicResource MutedBrush}" Margin="12,9"/>
+                    <TextBlock Grid.Column="2" Text="{Binding After}" Style="{StaticResource DataText}" FontWeight="SemiBold" Margin="12,9"/>
+                    <TextBlock Grid.Column="3" Text="{Binding Change}" Margin="12,9">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Verdict}" Value="Better">
+                                        <Setter Property="Foreground" Value="{DynamicResource AppliedTextBrush}"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Verdict}" Value="Worse">
+                                        <Setter Property="Foreground" Value="{DynamicResource DangerTextBrush}"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </Grid>
             </Border>
         </DataTemplate>
@@ -256,9 +415,24 @@
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="{Binding UpdateText}" TextWrapping="Wrap" VerticalAlignment="Center"/>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="16,0,0,0">
-                            <Button Content="Download" Style="{StaticResource PrimaryButton}" Command="{Binding OpenUpdateCommand}"
+                            <Button Content="{Binding UpdateButtonText}" Style="{StaticResource PrimaryButton}" Command="{Binding OpenUpdateCommand}"
                                     Margin="0,0,8,0"/>
                             <Button Content="Dismiss" Style="{StaticResource SecondaryButton}" Command="{Binding DismissUpdateCommand}"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+                <Border Background="{DynamicResource BannerBgBrush}" BorderBrush="{DynamicResource BannerLineBrush}"
+                        BorderThickness="1" CornerRadius="5" Padding="14,10" Margin="0,0,0,12"
+                        Visibility="{Binding ExplorerRestartNeeded, Converter={StaticResource BoolToVisibility}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Some of your changes only show after File Explorer restarts." TextWrapping="Wrap" VerticalAlignment="Center"/>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="16,0,0,0">
+                            <Button Content="Restart Explorer" Style="{StaticResource PrimaryButton}" Command="{Binding RestartExplorerCommand}" Margin="0,0,8,0"/>
+                            <Button Content="Later" Style="{StaticResource SecondaryButton}" Command="{Binding DismissExplorerCommand}"/>
                         </StackPanel>
                     </Grid>
                 </Border>
@@ -270,14 +444,130 @@
                 </Border>
             </StackPanel>
 
-            <StackPanel Grid.Row="1" Margin="0,0,0,18">
-                <TextBlock Text="{Binding Selected.Title}" FontFamily="{StaticResource DisplayFont}" FontSize="30"/>
-                <TextBlock Text="{Binding Selected.Blurb}" Foreground="{DynamicResource MutedBrush}" FontSize="14"
-                           TextWrapping="Wrap" MaxWidth="640" HorizontalAlignment="Left" Margin="0,4,0,0"/>
-            </StackPanel>
+            <Grid Grid.Row="1" Margin="0,0,0,18">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="{Binding Selected.Title}" FontFamily="{StaticResource DisplayFont}" FontSize="30"/>
+                    <TextBlock Text="{Binding Selected.Blurb}" Foreground="{DynamicResource MutedBrush}" FontSize="14"
+                               TextWrapping="Wrap" MaxWidth="640" HorizontalAlignment="Left" Margin="0,4,0,0"/>
+                </StackPanel>
+                <Button Grid.Column="1" Content="Add a game…" Style="{StaticResource PrimaryButton}" VerticalAlignment="Top"
+                        Command="{Binding AddGameCommand}"
+                        Visibility="{Binding Selected.IsGames, Converter={StaticResource BoolToVisibility}}"/>
+                <Button Grid.Column="1" Content="Check again" Style="{StaticResource SecondaryButton}" VerticalAlignment="Top"
+                        Command="{Binding Health.RunCommand}" IsEnabled="{Binding Health.CanRun}"
+                        Visibility="{Binding Selected.IsHealth, Converter={StaticResource BoolToVisibility}}"/>
+            </Grid>
 
-            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Padding="0,0,12,0">
-                <ItemsControl ItemsSource="{Binding Selected.Tweaks}" Margin="0,0,0,16"/>
+            <!-- Tweaks (every category, and "Your games") -->
+            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Padding="0,0,12,0"
+                          Visibility="{Binding Selected.ShowsTweaks, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel>
+                    <TextBlock Text="No games yet. Press &quot;Add a game…&quot; and pick the game's .exe; you then choose what to change for it, one setting at a time."
+                               TextWrapping="Wrap" MaxWidth="560" HorizontalAlignment="Left" Foreground="{DynamicResource MutedBrush}"
+                               Visibility="{Binding Selected.ShowsEmptyGames, Converter={StaticResource BoolToVisibility}}"/>
+                    <ItemsControl ItemsSource="{Binding Selected.Tweaks}" Margin="0,0,0,16"/>
+
+                    <!-- AI apps that came with Windows or Microsoft 365 -->
+                    <StackPanel Margin="0,8,0,16" Visibility="{Binding Selected.ShowsAiApps, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="Installed AI apps" FontFamily="{StaticResource DisplayFont}" FontSize="16" Margin="0,0,0,8"/>
+                        <TextBlock Text="No AI apps from this list are installed for your account." Style="{StaticResource MetaText}"
+                                   Visibility="{Binding Selected.NoAiApps, Converter={StaticResource BoolToVisibility}}"/>
+                        <ItemsControl ItemsSource="{Binding Selected.AiApps}"/>
+                    </StackPanel>
+
+                    <!-- Tweaks that don't apply here, with the reason -->
+                    <StackPanel Margin="0,8,0,16" Visibility="{Binding Selected.HasUnavailable, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="Not available on this PC" FontFamily="{StaticResource DisplayFont}" FontSize="16" Margin="0,0,0,8"/>
+                        <ItemsControl ItemsSource="{Binding Selected.Unavailable}"/>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- PC health check -->
+            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Padding="0,0,12,0"
+                          Visibility="{Binding Selected.IsHealth, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel>
+                    <TextBlock Text="{Binding Health.Summary}" FontFamily="{StaticResource DisplayFont}" FontSize="17" Margin="0,0,0,12"/>
+                    <ProgressBar IsIndeterminate="True" Height="3" Margin="0,0,0,12" BorderThickness="0"
+                                 Foreground="{DynamicResource InkBrush}" Background="{DynamicResource LineBrush}"
+                                 Visibility="{Binding Health.IsRunning, Converter={StaticResource BoolToVisibility}}"/>
+                    <ItemsControl ItemsSource="{Binding Health.Items}" Margin="0,0,0,16"/>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Before and after -->
+            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Padding="0,0,12,0"
+                          Visibility="{Binding Selected.IsMeasure, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel Margin="0,0,0,16" MaxWidth="820" HorizontalAlignment="Left">
+                    <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}"
+                               Text="A snapshot measures what tweaks can really change: the load Windows puts on the PC while it sits idle, how many programs start with it, and how long the last boot took. It does not measure frame rate; for that, record a game with a frame-time tool such as CapFrameX or PresentMon, before and after."/>
+
+                    <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1"
+                            CornerRadius="5" Padding="18" Margin="0,16,0,0">
+                        <StackPanel>
+                            <TextBlock Text="Take a snapshot" FontFamily="{StaticResource DisplayFont}" FontSize="16"/>
+                            <Grid Margin="0,10,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Text="{Binding Measure.Label, UpdateSourceTrigger=PropertyChanged}" Padding="8,6"
+                                         VerticalContentAlignment="Center" AutomationProperties.Name="Snapshot name"/>
+                                <Button Grid.Column="1" Content="Take snapshot (10 s)" Style="{StaticResource PrimaryButton}" Margin="10,0,0,0"
+                                        Command="{Binding Measure.TakeCommand}" IsEnabled="{Binding Measure.CanTake}"/>
+                            </Grid>
+                            <ProgressBar Minimum="0" Maximum="1" Value="{Binding Measure.Progress, Mode=OneWay}" Height="4" Margin="0,12,0,0" BorderThickness="0"
+                                         Foreground="{DynamicResource InkBrush}" Background="{DynamicResource LineBrush}"
+                                         Visibility="{Binding Measure.IsCapturing, Converter={StaticResource BoolToVisibility}}"/>
+                            <TextBlock Text="{Binding Measure.Status}" Style="{StaticResource MetaText}" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="Your snapshots" FontFamily="{StaticResource DisplayFont}" FontSize="16" Margin="0,22,0,4"/>
+                    <TextBlock Text="None yet." Style="{StaticResource MetaText}"
+                               Visibility="{Binding Measure.HasSnapshots, Converter={StaticResource InverseBoolToVisibility}}"/>
+                    <ItemsControl ItemsSource="{Binding Measure.Snapshots}"/>
+
+                    <TextBlock Text="Compare" FontFamily="{StaticResource DisplayFont}" FontSize="16" Margin="0,22,0,8"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Before" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <ComboBox Grid.Column="1" ItemsSource="{Binding Measure.Snapshots}" SelectedItem="{Binding Measure.Before, Mode=TwoWay}"
+                                  AutomationProperties.Name="Snapshot taken before" Margin="0,0,16,0"/>
+                        <TextBlock Grid.Column="2" Text="After" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <ComboBox Grid.Column="3" ItemsSource="{Binding Measure.Snapshots}" SelectedItem="{Binding Measure.After, Mode=TwoWay}"
+                                  AutomationProperties.Name="Snapshot taken after"/>
+                    </Grid>
+                    <Border Margin="0,12,0,0" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="4"
+                            Visibility="{Binding Measure.CanCompare, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel>
+                            <Grid Background="{DynamicResource SheetHeadBrush}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="150"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Measure" Style="{StaticResource MetaText}" FontWeight="SemiBold" Margin="12,7"/>
+                                <TextBlock Grid.Column="1" Text="Before" Style="{StaticResource MetaText}" FontWeight="SemiBold" Margin="12,7"/>
+                                <TextBlock Grid.Column="2" Text="After" Style="{StaticResource MetaText}" FontWeight="SemiBold" Margin="12,7"/>
+                                <TextBlock Grid.Column="3" Text="Change" Style="{StaticResource MetaText}" FontWeight="SemiBold" Margin="12,7"/>
+                            </Grid>
+                            <ItemsControl ItemsSource="{Binding Measure.Rows}"/>
+                        </StackPanel>
+                    </Border>
+                    <TextBlock Style="{StaticResource MetaText}" TextWrapping="Wrap" Margin="0,8,0,0"
+                               Text="Differences smaller than normal measurement noise show as &quot;no real change&quot;. For the cleanest comparison, take both snapshots right after a restart, with nothing else open."/>
+                </StackPanel>
             </ScrollViewer>
         </Grid>
 

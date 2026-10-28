@@ -21,7 +21,11 @@ public static class MaintenanceTweaks
         available: PowerCapabilities.SupportsHibernate,
         preview: () => new[] { new PreviewLine("Hibernation and Fast Startup", "on", "off") },
         fingerprint: () => "hiberfil.sys exists: " +
-            File.Exists(Path.Combine((Environment.GetEnvironmentVariable("SystemDrive") ?? "C:") + @"\", "hiberfil.sys")));
+            File.Exists(Path.Combine((Environment.GetEnvironmentVariable("SystemDrive") ?? "C:") + @"\", "hiberfil.sys")))
+    {
+        NeedsAdmin = true,
+        UnavailableReason = "The firmware of this PC doesn't support hibernation.",
+    };
 
     public static ITweak RestorePoint(TweakContext c) => new DelegateTweak(
         c, "restore-point", "Create a restore point",
@@ -35,7 +39,10 @@ public static class MaintenanceTweaks
                 Checkpoint-Computer -Description 'Windows Optimizer' -RestorePointType 'MODIFY_SETTINGS'
                 """);
             return FromCommand(result, "Restore point requested.");
-        });
+        })
+    {
+        NeedsAdmin = true,
+    };
 
     public static ITweak TrimSystemDrive(TweakContext c) => new DelegateTweak(
         c, "trim-system-drive", "Run TRIM on the system drive",
@@ -46,7 +53,10 @@ public static class MaintenanceTweaks
         {
             var drive = Environment.GetEnvironmentVariable("SystemDrive") ?? "C:";
             return FromCommand(c.Runner.Run("defrag.exe", $"{drive} /L", timeoutMs: 600_000), "TRIM finished.");
-        });
+        })
+    {
+        NeedsAdmin = true,
+    };
 
     public static ITweak LargeFilesReport(TweakContext c) => new DelegateTweak(
         c, "report-large-files", "List files of 500 MB or more",
@@ -161,6 +171,7 @@ public static class MaintenanceTweaks
             return FromCommand(c.Runner.Run(setup, "/uninstall", timeoutMs: 300_000), "OneDrive uninstalled.");
         })
     {
+        NeedsAdmin = true,
         Warning = "The app doesn't reinstall OneDrive. To go back, download it from Microsoft's site and remove the DisableFileSyncNGSC policy. Your files are not deleted.",
     };
 
@@ -198,7 +209,10 @@ public static class MaintenanceTweaks
                 return TweakResult.Ok("Automatic start removed.");
             },
             available: () => File.Exists(RacingExe),
-            preview: () => new[] { new PreviewLine("Startup folder shortcut", File.Exists(shortcut) ? "exists" : "missing", "exists", shortcut) });
+            preview: () => new[] { new PreviewLine("Startup folder shortcut", File.Exists(shortcut) ? "exists" : "missing", "exists", shortcut) })
+        {
+            UnavailableReason = "Racing GT EVO isn't installed on this PC.",
+        };
     }
 
     private static TweakResult FromCommand(CommandResult result, string success) =>

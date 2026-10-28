@@ -3,7 +3,7 @@ namespace WindowsOptimizer.Core;
 public sealed record RegistryEdit(
     RegHive Hive, string SubKey, string Name, RegValue Value, bool OnlyIfKeyExists = false)
 {
-    public string HivePrefix => Hive == RegHive.CurrentUser ? "HKCU" : "HKLM";
+    public string HivePrefix => Hive switch { RegHive.CurrentUser => "HKCU", RegHive.Users => "HKU", _ => "HKLM" };
     public string FullKey => $@"{HivePrefix}\{SubKey}";
     public string Display => $@"{FullKey}\{Name}";
 }
@@ -16,6 +16,10 @@ public static class Reg
 
     public static RegistryEdit LmDword(string subKey, string name, int value, bool onlyIfKeyExists = false) =>
         new(RegHive.LocalMachine, subKey, name, RegValue.DWord(value), onlyIfKeyExists);
+
+    /// <summary>A value of the .DEFAULT profile (HKU\.DEFAULT): what the sign-in screen and new accounts use.</summary>
+    public static RegistryEdit DefaultProfileString(string subKey, string name, string value) =>
+        new(RegHive.Users, @".DEFAULT\" + subKey, name, RegValue.Str(value));
 
     public static RegistryEdit CuString(string subKey, string name, string value) =>
         new(RegHive.CurrentUser, subKey, name, RegValue.Str(value));
@@ -39,6 +43,14 @@ public class RegistryTweak : TweakBase
     }
 
     protected IReadOnlyList<RegistryEdit> Edits { get; }
+
+    /// <summary>Hides the tweak when this returns false, e.g. for settings of an app that isn't installed.</summary>
+    public Func<bool>? Available { get; set; }
+
+    public override bool IsAvailable() => Available?.Invoke() ?? true;
+
+    /// <summary>Writing under HKLM needs administrator rights; HKCU does not.</summary>
+    public override bool RequiresAdmin => NeedsAdmin || Edits.Any(e => e.Hive != RegHive.CurrentUser);
 
     private List<RegistryEdit> ActiveEdits() =>
         Edits.Where(e => !e.OnlyIfKeyExists || Ctx.Registry.KeyExists(e.Hive, e.SubKey)).ToList();

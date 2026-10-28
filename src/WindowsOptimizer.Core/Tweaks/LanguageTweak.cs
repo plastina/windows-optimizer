@@ -13,6 +13,7 @@ public sealed class LanguageTweak : TweakBase
             "Sets language, region and format to English (United States) with a US keyboard. Previous languages and keyboards come back on undo, but each language returns with its default keyboard.",
             TweakCategory.Language, RiskLevel.Medium)
     {
+        NeedsAdmin = true;
     }
 
     /// <summary>The user's regional format, e.g. "en-US". Some installs only store the numeric Locale (00000409).</summary>
