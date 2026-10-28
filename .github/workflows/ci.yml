@@ -120,7 +120,8 @@ jobs:
       - name: Build the installer
         run: >
           vpk pack --packId plastina.WindowsOptimizer --packVersion ${{ env.VERSION }} --packDir publish
-          --mainExe WindowsOptimizer.exe --packTitle "Windows Optimizer" --packAuthors plastina -o releases
+          --mainExe WindowsOptimizer.exe --packTitle "Windows Optimizer" --packAuthors plastina
+          --icon src/WindowsOptimizer.App/Assets/app.ico -o releases
 
       # Velopack's own Setup.exe installs in one click with no choices. It is wrapped in an Inno Setup wizard
       # (welcome, install folder, summary, finish) that runs it silently into the folder the user picked.
@@ -131,7 +132,7 @@ jobs:
           choco install innosetup --no-progress -y
           New-Item -ItemType Directory -Path build -Force | Out-Null
           Move-Item releases/plastina.WindowsOptimizer-win-Setup.exe build/VelopackSetup.exe -Force
-          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DAppVersion=$env:VERSION" "/DVelopackSetup=$PWD\build\VelopackSetup.exe" "/DOutDir=$PWD\releases" packaging/inno/WindowsOptimizer.iss
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DAppVersion=$env:VERSION" "/DVelopackSetup=$PWD\build\VelopackSetup.exe" "/DIconFile=$PWD\src\WindowsOptimizer.App\Assets\app.ico" "/DOutDir=$PWD\releases" packaging/inno/WindowsOptimizer.iss
           if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
 
       # Only this version's files: the download above also left the previous full package in the folder.

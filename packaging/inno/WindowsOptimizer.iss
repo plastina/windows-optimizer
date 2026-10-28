@@ -2,7 +2,7 @@
 ; Velopack still does the real install and owns the update mechanism and the Settings > Apps uninstall entry,
 ; so this script installs nothing itself and registers no uninstaller of its own (Uninstallable=no).
 ; The pipeline compiles it with:
-;   ISCC /DAppVersion=1.2.3 /DVelopackSetup=<path to Velopack's Setup.exe> /DOutDir=<folder> WindowsOptimizer.iss
+;   ISCC /DAppVersion=1.2.3 /DVelopackSetup=<path to Velopack's Setup.exe> /DIconFile=<path to app.ico> /DOutDir=<folder> WindowsOptimizer.iss
 
 #ifndef AppVersion
   #define AppVersion "0.0.0"
@@ -12,6 +12,9 @@
 #endif
 #ifndef OutDir
   #define OutDir "."
+#endif
+#ifndef IconFile
+  #error IconFile must point at the app's .ico.
 #endif
 
 [Setup]
@@ -32,6 +35,7 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir={#OutDir}
 OutputBaseFilename=WindowsOptimizer-win-Setup
+SetupIconFile={#IconFile}
 WizardStyle=classic
 Compression=lzma2
 SolidCompression=yes

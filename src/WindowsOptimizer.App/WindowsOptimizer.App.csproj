@@ -16,6 +16,9 @@
     <!-- "asInvoker": Release builds ask for administrator rights themselves at start (see Program.cs).
          Debug builds don't, so the app can be started from the IDE and in screenshots without a UAC prompt. -->
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- The greyhound. Drawn in tools/app-icon/greyhound.xaml and rendered by tools/Build-Icon.ps1. WPF windows,
+         the taskbar and the Start menu shortcut all use the exe's icon. -->
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>

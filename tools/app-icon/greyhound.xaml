@@ -1,0 +1,53 @@
+<!-- Source drawing of the app icon (256 x 256 design units): a greyhound in profile on a rounded badge.
+     tools/Build-Icon.ps1 renders it into src/WindowsOptimizer.App/Assets/app.ico. Not part of the app build. -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Head and neck, facing left. The neck runs past the bottom edge and is clipped by the badge. -->
+  <PathGeometry x:Key="Dog" Figures="M 34 124 C 34 114 44 111 54 109 L 112 93 C 130 87 142 77 160 75 C 186 73 207 90 214 120 L 228 262 L 138 262 C 142 218 142 188 128 166 C 112 157 84 151 56 143 C 42 141 34 135 34 124 Z" />
+  <PathGeometry x:Key="Badge" Figures="M 52 0 L 204 0 A 52 52 0 0 1 256 52 L 256 204 A 52 52 0 0 1 204 256 L 52 256 A 52 52 0 0 1 0 204 L 0 52 A 52 52 0 0 1 52 0 Z" />
+
+  <DrawingGroup x:Key="Icon">
+    <!-- Badge -->
+    <GeometryDrawing Geometry="{StaticResource Badge}">
+      <GeometryDrawing.Brush>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+          <GradientStop Color="#3F8FD2" Offset="0" />
+          <GradientStop Color="#1D3F6E" Offset="1" />
+        </LinearGradientBrush>
+      </GeometryDrawing.Brush>
+    </GeometryDrawing>
+
+    <DrawingGroup ClipGeometry="{StaticResource Badge}">
+      <!-- Speed lines behind the dog -->
+      <GeometryDrawing Brush="#33FFFFFF" Geometry="M 150 40 L 236 40 L 236 47 L 150 47 Z M 176 56 L 236 56 L 236 62 L 176 62 Z" />
+
+      <!-- Dog -->
+      <GeometryDrawing Brush="#E6B982" Geometry="{StaticResource Dog}" />
+
+      <!-- Shaded underside of the jaw and neck -->
+      <DrawingGroup ClipGeometry="{StaticResource Dog}">
+        <GeometryDrawing Brush="#26A5642B" Geometry="M 30 140 C 60 146 100 152 128 166 C 140 190 138 220 138 262 L 166 262 C 170 220 162 184 140 156 C 110 140 60 128 30 126 Z" />
+
+        <!-- Collar -->
+        <GeometryDrawing Brush="#E53E3E" Geometry="M 130 196 L 226 152 L 232 184 L 134 228 Z" />
+        <GeometryDrawing Brush="#F6C945" Geometry="M 154 213 A 11 11 0 1 1 154 213.01 Z" />
+      </DrawingGroup>
+
+      <!-- Rose ear, folded back -->
+      <GeometryDrawing Brush="#B3814F" Geometry="M 150 88 C 162 72 184 68 202 74 C 194 90 182 104 166 111 C 156 107 150 98 150 88 Z" />
+
+      <!-- Eye -->
+      <GeometryDrawing Brush="#2A1B12" Geometry="M 90 106 C 94 100 106 100 112 106 C 106 113 94 113 90 106 Z" />
+      <GeometryDrawing Brush="#FFFFFF" Geometry="M 98 104 A 2.2 2.2 0 1 1 98 104.01 Z" />
+
+      <!-- Nose and mouth line -->
+      <GeometryDrawing Brush="#1B1B22" Geometry="M 32 118 C 32 109 44 106 54 109 L 52 130 C 40 134 32 129 32 118 Z" />
+      <GeometryDrawing Geometry="M 54 141 C 74 146 96 150 114 156">
+        <GeometryDrawing.Pen>
+          <Pen Brush="#8C5A2E" Thickness="3" StartLineCap="Round" EndLineCap="Round" />
+        </GeometryDrawing.Pen>
+      </GeometryDrawing>
+    </DrawingGroup>
+  </DrawingGroup>
+</ResourceDictionary>
