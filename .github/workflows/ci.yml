@@ -3,6 +3,8 @@ name: CI and release
 # Every push to main builds, tests and, if the tests pass, publishes a GitHub release with a single
 # WindowsOptimizer.exe. The version is "<version.txt>.<run number>", for example 0.2.7: edit version.txt to
 # move to 0.3, 1.0 and so on. Pull requests only build and test. You can also run it by hand (Actions tab).
+# A release created by hand on GitHub (Releases > Draft a new release) also gets the exe: it is built from
+# that release's tag, versioned after it (v1.2.3 -> 1.2.3), and attached to the release you published.
 # If the SIGNPATH_ORGANIZATION_ID repository variable is set, the exe is code-signed first (see packaging/SIGNING.md).
 on:
   push:
@@ -14,6 +16,9 @@ on:
       - 'bucket/**'
       - 'packaging/winget/**'
   pull_request:
+  # Releases this workflow creates itself use GITHUB_TOKEN, which never raises this event, so there is no loop.
+  release:
+    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -56,9 +61,14 @@ jobs:
       - name: Work out the version
         shell: pwsh
         run: |
-          $base = (Get-Content version.txt -Raw).Trim()
-          $version = "$base.${{ github.run_number }}"
-          if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "version.txt must hold MAJOR.MINOR (for example 0.2); got '$base'." }
+          if ('${{ github.event_name }}' -eq 'release') {
+            $version = '${{ github.event.release.tag_name }}' -replace '^v', ''
+            if ($version -notmatch '^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$') { throw "The release tag must look like v1.2.3 or v1.2.3-rc1; got '${{ github.event.release.tag_name }}'." }
+          } else {
+            $base = (Get-Content version.txt -Raw).Trim()
+            $version = "$base.${{ github.run_number }}"
+            if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "version.txt must hold MAJOR.MINOR (for example 0.2); got '$base'." }
+          }
           "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           "EXE_NAME=WindowsOptimizer-v$version-win-x64.exe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           Write-Host "Releasing $version"
@@ -108,6 +118,7 @@ jobs:
           "$hash  $env:EXE_NAME" | Out-File "publish/$env:EXE_NAME.sha256" -Encoding ascii
 
       - name: Create the release
+        if: ${{ github.event_name != 'release' }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.VERSION }}
@@ -118,10 +129,20 @@ jobs:
             publish/*.sha256
           generate_release_notes: true
 
+      # The release already exists, with your title and notes, so only the files are added to it.
+      - name: Attach the executable to the published release
+        if: ${{ github.event_name == 'release' }}
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "publish/$env:EXE_NAME" "publish/$env:EXE_NAME.sha256" --clobber --repo "${{ github.repository }}"
+
       # Keeps `scoop install` and the winget manifests pointing at the release that was just published.
       # A failure here must not undo the release, so it is allowed to fail. Pushes made with GITHUB_TOKEN
       # don't start new workflow runs, so this commit can't trigger another release.
+      # Not for hand-made releases: their tag may be an older commit or a pre-release.
       - name: Update the Scoop and winget manifests
+        if: ${{ github.event_name != 'release' }}
         continue-on-error: true
         shell: pwsh
         run: |
