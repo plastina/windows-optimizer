@@ -29,7 +29,7 @@ The app needs to run as administrator (the Release build asks for that by itself
 
 ## Install
 
-**Installer**: get `WindowsOptimizer-win-Setup.exe` from the [Releases](../../releases) page and run it. A wizard lets you choose the install folder (default `%LocalAppData%\plastina.WindowsOptimizer`); it installs for your account only, needs no admin rights and no .NET, and adds Start menu and desktop shortcuts. `/SILENT` and `/DIR="path"` work for unattended installs. Uninstall it from Settings > Apps. Check the `.sha256` file next to it if you want to verify the download.
+**Installer**: get `WindowsOptimizer-win-Setup.exe` from the [Releases](../../releases) page and run it. A wizard lets you choose the install folder (default `%LocalAppData%\plastina.WindowsOptimizer`); it installs for your account only, needs no admin rights and no .NET, and adds Start menu and desktop shortcuts. `/SILENT` and `/DIR="path"` work for unattended installs. Uninstall it from Settings > Apps. GitHub shows the SHA-256 of each file on the Releases page if you want to verify the download.
 
 **Updates install themselves**: each time the app opens it checks GitHub, downloads a newer version in the background and installs it when you close the app (or right away with **Restart now** on the banner). Only the files that changed are downloaded.
 
@@ -110,7 +110,7 @@ High-risk tweaks need a `Warning`; a test enforces that.
 
 ## Releases
 
-Releases are automatic. Every push to `main` runs the [`ci.yml`](.github/workflows/ci.yml) pipeline, which builds and tests, and, if the tests pass, publishes a GitHub release with the installer (`WindowsOptimizer-win-Setup.exe`), a portable zip, their checksums and the [Velopack](https://velopack.io) packages (`*.nupkg`, `releases.win.json`) that installed copies update from. Don't delete those packages from a release: installed copies would stop finding the update. Publishing a release by hand on GitHub builds the same files from its tag. Pull requests only build and test. You can also run it by hand from the Actions tab.
+Releases are automatic. Every push to `main` runs the [`ci.yml`](.github/workflows/ci.yml) pipeline, which builds and tests, and, if the tests pass, publishes a GitHub release with the installer (`WindowsOptimizer-win-Setup.exe`), a portable zip and the [Velopack](https://velopack.io) packages (`*.nupkg`, `releases.win.json`) that installed copies update from. Don't delete those packages from a release: installed copies would stop finding the update. Publishing a release by hand on GitHub builds the same files from its tag. Pull requests only build and test. You can also run it by hand from the Actions tab.
 
 - **Version**: `<version.txt>.<run number>`, for example `0.2.7`. Edit [`version.txt`](version.txt) (it holds `MAJOR.MINOR`) to move to 0.3, 1.0 and so on; the last number keeps counting on its own.
 - **No release for documentation**: pushes that only touch Markdown files, `LICENSE`, `bucket/` or `packaging/winget/` skip the pipeline.

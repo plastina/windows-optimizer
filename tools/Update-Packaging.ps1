@@ -3,7 +3,7 @@
     Rewrites the Scoop and winget manifests for a published GitHub release.
 
 .DESCRIPTION
-    Downloads the release's .sha256 files and regenerates:
+    Reads the release's file checksums from GitHub and regenerates:
       - bucket/windows-optimizer.json                      (Scoop bucket, this repository)
       - packaging/winget/manifests/p/plastina/WindowsOptimizer/<version>/*.yaml  (to submit to microsoft/winget-pkgs)
     Run it after every release, then commit the result.
@@ -24,20 +24,27 @@ $setupName = 'WindowsOptimizer-win-Setup.exe'
 $portableName = 'WindowsOptimizer-win-Portable.zip'
 $baseUrl = "https://github.com/$Repo/releases/download/v$Version"
 
+$release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/tags/v$Version" -Headers @{ 'User-Agent' = 'Update-Packaging' }
+
+# GitHub computes a SHA-256 for every uploaded asset and returns it as "digest": "sha256:<hex>".
+# Releases uploaded long ago may lack it; then the file is downloaded and hashed here.
 function Get-ReleaseHash([string]$fileName) {
-    $content = (Invoke-WebRequest -Uri "$baseUrl/$fileName.sha256" -UseBasicParsing).Content
-    # Windows PowerShell 5.1 returns octet-stream bodies as bytes; PowerShell 7 returns text.
-    $line = if ($content -is [byte[]]) { [Text.Encoding]::UTF8.GetString($content) } else { [string]$content }
-    $hash = ($line.Trim() -split '\s+')[0].ToLowerInvariant()
-    if ($hash -notmatch '^[0-9a-f]{64}$') { throw "Unexpected checksum file content: $line" }
-    $hash
+    $asset = $release.assets | Where-Object name -eq $fileName
+    if (-not $asset) { throw "v$Version has no asset named $fileName." }
+    if ($asset.digest -match '^sha256:([0-9a-fA-F]{64})$') { return $Matches[1].ToLowerInvariant() }
+
+    Write-Host "No digest for $fileName; downloading it to hash it..."
+    $temp = Join-Path ([IO.Path]::GetTempPath()) "$([guid]::NewGuid())-$fileName"
+    try {
+        Invoke-WebRequest -Uri "$baseUrl/$fileName" -OutFile $temp -UseBasicParsing
+        (Get-FileHash $temp -Algorithm SHA256).Hash.ToLowerInvariant()
+    }
+    finally { Remove-Item $temp -Force -ErrorAction SilentlyContinue }
 }
 
 Write-Host "Reading the checksums of v$Version..."
 $setupHash = Get-ReleaseHash $setupName
 $portableHash = Get-ReleaseHash $portableName
-
-$release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/tags/v$Version" -Headers @{ 'User-Agent' = 'Update-Packaging' }
 $releaseDate = ([datetime]$release.published_at).ToString('yyyy-MM-dd')
 
 # --- Scoop: the portable zip. It updates itself like the installed app does. ---------------------------------------------------------------------------------------
@@ -58,8 +65,8 @@ $scoop = [ordered]@{
     autoupdate   = [ordered]@{
         architecture = [ordered]@{
             '64bit' = [ordered]@{
-                url  = "https://github.com/$Repo/releases/download/v`$version/$portableName"
-                hash = [ordered]@{ url = '$baseurl.sha256' }
+                # No hash: there are no checksum files to point at, so Scoop downloads the zip and hashes it.
+                url = "https://github.com/$Repo/releases/download/v`$version/$portableName"
             }
         }
     }

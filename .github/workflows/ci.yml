@@ -138,7 +138,8 @@ jobs:
       # Only this version's files: the download above also left the previous full package in the folder.
       # The pack id is also the install folder (%LocalAppData%\plastina.WindowsOptimizer), kept apart from the
       # app's own settings folder. Setup and the zip get shorter names; the updater only reads the .nupkg names.
-      # The checksums are of the files people actually download, so they come after signing.
+      # No checksum files: GitHub shows each asset's SHA-256 on the release page and in the API, and
+      # tools/Update-Packaging.ps1 reads the hashes for Scoop and winget from there.
       - name: List the release files
         shell: pwsh
         run: |
@@ -151,11 +152,6 @@ jobs:
             $short
           }
           $assets = @($assets) + 'WindowsOptimizer-win-Setup.exe'
-          foreach ($name in @($assets | Where-Object { $_ -notlike '*.nupkg' })) {
-            $hash = (Get-FileHash "releases/$name" -Algorithm SHA256).Hash.ToLower()
-            "$hash  $name" | Out-File "releases/$name.sha256" -Encoding ascii
-            $assets += "$name.sha256"
-          }
           $files = @($assets) + 'releases.win.json', 'RELEASES' | ForEach-Object { "releases/$_" }
           $files | Out-File release-files.txt -Encoding utf8
           $files

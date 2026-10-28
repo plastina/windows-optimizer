@@ -31,5 +31,5 @@ partly yours to do. Their conditions are at <https://signpath.org/terms>.
 
 ## Why the checksum comes after signing
 
-Signing changes the file, so the `.sha256` published with the release (and the hashes in the Scoop and winget
-manifests) must be of the signed file. The workflow computes it after the signing step.
+Signing changes the file, so the hashes in the Scoop and winget manifests must be of the signed file. They come from the
+SHA-256 GitHub computes for the assets uploaded after the signing step.

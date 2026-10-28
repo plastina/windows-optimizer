@@ -19,10 +19,7 @@
   "autoupdate": {
     "architecture": {
       "64bit": {
-        "url": "https://github.com/plastina/windows-optimizer/releases/download/v$version/WindowsOptimizer-win-Portable.zip",
-        "hash": {
-          "url": "$baseurl.sha256"
-        }
+        "url": "https://github.com/plastina/windows-optimizer/releases/download/v$version/WindowsOptimizer-win-Portable.zip"
       }
     }
   }
