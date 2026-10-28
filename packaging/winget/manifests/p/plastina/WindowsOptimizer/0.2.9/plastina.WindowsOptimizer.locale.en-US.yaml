@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
 PackageIdentifier: plastina.WindowsOptimizer
-PackageVersion: 0.2.8
+PackageVersion: 0.2.9
 PackageLocale: en-US
 Publisher: plastina
 PublisherUrl: https://github.com/plastina
@@ -16,6 +16,6 @@ Tags:
 - gaming
 - privacy
 - tweaks
-ReleaseNotesUrl: https://github.com/plastina/windows-optimizer/releases/tag/v0.2.8
+ReleaseNotesUrl: https://github.com/plastina/windows-optimizer/releases/tag/v0.2.9
 ManifestType: defaultLocale
 ManifestVersion: 1.6.0
