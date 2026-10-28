@@ -68,7 +68,7 @@ $bucket = Join-Path $root 'bucket'
 New-Item -ItemType Directory -Path $bucket -Force | Out-Null
 $scoop | ConvertTo-Json -Depth 8 | Set-Content (Join-Path $bucket 'windows-optimizer.json') -Encoding UTF8
 
-# --- winget: the installer. Velopack installs per user, without admin rights, and takes --silent. --------------------------------------------------------------------------------------
+# --- winget: the installer. An Inno Setup wizard (per user, no admin rights) that runs Velopack's installer; it takes Inno's silent switches. --------------------------------------------------------------------------------------
 $id = 'plastina.WindowsOptimizer'
 $dir = Join-Path $root "packaging\winget\manifests\p\plastina\WindowsOptimizer\$Version"
 New-Item -ItemType Directory -Path $dir -Force | Out-Null
@@ -96,8 +96,8 @@ InstallModes:
 - interactive
 - silent
 InstallerSwitches:
-  Silent: --silent
-  SilentWithProgress: --silent
+  Silent: /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
+  SilentWithProgress: /SILENT /SUPPRESSMSGBOXES /NORESTART
 UpgradeBehavior: install
 ProductCode: plastina.WindowsOptimizer
 ReleaseDate: $releaseDate

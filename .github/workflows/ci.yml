@@ -122,6 +122,18 @@ jobs:
           vpk pack --packId plastina.WindowsOptimizer --packVersion ${{ env.VERSION }} --packDir publish
           --mainExe WindowsOptimizer.exe --packTitle "Windows Optimizer" --packAuthors plastina -o releases
 
+      # Velopack's own Setup.exe installs in one click with no choices. It is wrapped in an Inno Setup wizard
+      # (welcome, install folder, summary, finish) that runs it silently into the folder the user picked.
+      # The wizard takes the published name, WindowsOptimizer-win-Setup.exe, which Scoop/winget already use.
+      - name: Build the installer wizard
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress -y
+          New-Item -ItemType Directory -Path build -Force | Out-Null
+          Move-Item releases/plastina.WindowsOptimizer-win-Setup.exe build/VelopackSetup.exe -Force
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DAppVersion=$env:VERSION" "/DVelopackSetup=$PWD\build\VelopackSetup.exe" "/DOutDir=$PWD\releases" packaging/inno/WindowsOptimizer.iss
+          if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
+
       # Only this version's files: the download above also left the previous full package in the folder.
       # The pack id is also the install folder (%LocalAppData%\plastina.WindowsOptimizer), kept apart from the
       # app's own settings folder. Setup and the zip get shorter names; the updater only reads the .nupkg names.
@@ -131,10 +143,13 @@ jobs:
         run: |
           $assets = foreach ($name in (Get-Content releases/assets.win.json -Raw | ConvertFrom-Json).RelativeFileName) {
             if ($name -like '*.nupkg') { $name; continue }
+            # Velopack's Setup was moved into the wizard above; the wizard is added after this loop.
+            if ($name -like '*-Setup.exe') { continue }
             $short = $name -replace '^plastina\.', ''
             Move-Item "releases/$name" "releases/$short" -Force
             $short
           }
+          $assets = @($assets) + 'WindowsOptimizer-win-Setup.exe'
           foreach ($name in @($assets | Where-Object { $_ -notlike '*.nupkg' })) {
             $hash = (Get-FileHash "releases/$name" -Algorithm SHA256).Hash.ToLower()
             "$hash  $name" | Out-File "releases/$name.sha256" -Encoding ascii
