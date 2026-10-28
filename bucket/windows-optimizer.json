@@ -1,12 +1,12 @@
 {
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Applies Windows performance, gaming and privacy tweaks one at a time, with undo.",
   "homepage": "https://github.com/plastina/windows-optimizer",
   "license": "MIT",
   "architecture": {
     "64bit": {
-      "url": "https://github.com/plastina/windows-optimizer/releases/download/v0.2.7/WindowsOptimizer-win-Portable.zip",
-      "hash": "25cfbe29169fc704cda6e48c342357ec3f9f96885e4d76ea7ed13247fdacaed1"
+      "url": "https://github.com/plastina/windows-optimizer/releases/download/v0.2.8/WindowsOptimizer-win-Portable.zip",
+      "hash": "93580c09141edb45a9727047b7f86ef8e559abf5e4122721687bd6389cea2fa5"
     }
   },
   "shortcuts": [
