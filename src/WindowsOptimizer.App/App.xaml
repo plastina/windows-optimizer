@@ -98,12 +98,12 @@
         <!-- Small labelled outline next to a tweak's name: risk, admin, restarts, recommended. -->
         <Style x:Key="Chip" TargetType="Border">
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="4"/>
-            <Setter Property="Padding" Value="7,1.5"/>
-            <Setter Property="Margin" Value="0,0,6,4"/>
+            <Setter Property="CornerRadius" Value="3"/>
+            <Setter Property="Padding" Value="5,0"/>
+            <Setter Property="Margin" Value="0,1,6,1"/>
         </Style>
         <Style x:Key="ChipText" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="FontSize" Value="10.5"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
 
@@ -114,10 +114,10 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ToggleButton">
-                        <Grid Width="46" Height="26" Background="Transparent">
-                            <Border x:Name="Track" CornerRadius="13" BorderThickness="2" Background="Transparent"
+                        <Grid Width="36" Height="20" Background="Transparent">
+                            <Border x:Name="Track" CornerRadius="10" BorderThickness="1.5" Background="Transparent"
                                     BorderBrush="{DynamicResource MutedBrush}"/>
-                            <Ellipse x:Name="Knob" Width="14" Height="14" HorizontalAlignment="Left" Margin="6,0,0,0"
+                            <Ellipse x:Name="Knob" Width="10" Height="10" HorizontalAlignment="Left" Margin="5,0,0,0"
                                      Fill="{DynamicResource MutedBrush}"/>
                         </Grid>
                         <ControlTemplate.Triggers>
@@ -125,7 +125,7 @@
                                 <Setter TargetName="Track" Property="Background" Value="{DynamicResource AppliedBrush}"/>
                                 <Setter TargetName="Track" Property="BorderBrush" Value="{DynamicResource AppliedBrush}"/>
                                 <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Right"/>
-                                <Setter TargetName="Knob" Property="Margin" Value="0,0,6,0"/>
+                                <Setter TargetName="Knob" Property="Margin" Value="0,0,5,0"/>
                                 <Setter TargetName="Knob" Property="Fill" Value="White"/>
                             </Trigger>
                             <Trigger Property="IsKeyboardFocused" Value="True">
@@ -237,6 +237,35 @@
             </Setter>
         </Style>
 
+        <!-- Chevron at the end of a tweak row: opens and closes "what changes". -->
+        <Style x:Key="ChevronToggle" TargetType="ToggleButton">
+            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="ToolTip" Value="See what changes"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Bd" Width="26" Height="26" CornerRadius="4" BorderThickness="2" BorderBrush="Transparent" Background="Transparent">
+                            <TextBlock x:Name="Glyph" Text="&#xE70D;" FontFamily="Segoe MDL2 Assets" FontSize="10"
+                                       Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Glyph" Property="Text" Value="&#xE70E;"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource HoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource FocusBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="LinkButton" TargetType="Button">
             <Setter Property="Foreground" Value="{DynamicResource InkBrush}"/>
             <Setter Property="FontFamily" Value="{StaticResource BodyFont}"/>
@@ -271,7 +300,7 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBoxItem">
                         <Border x:Name="Bd" Background="Transparent" BorderBrush="Transparent" BorderThickness="2"
-                                CornerRadius="5" Padding="10,7" Margin="0,0,0,2">
+                                CornerRadius="5" Padding="8,3" Margin="0,0,0,1">
                             <ContentPresenter/>
                         </Border>
                         <ControlTemplate.Triggers>

@@ -1,9 +1,11 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Security.Principal;
 using System.Text;
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Input;
 using WindowsOptimizer.Core;
 
@@ -11,16 +13,42 @@ namespace WindowsOptimizer.App.ViewModels;
 
 public sealed class CategoryViewModel : ObservableObject
 {
-    public CategoryViewModel(string title, string blurb, ObservableCollection<TweakViewModel> tweaks, PageKind kind = PageKind.Tweaks)
+    private ICollectionView? _grouped;
+
+    public CategoryViewModel(string title, string blurb, ObservableCollection<TweakViewModel> tweaks, PageKind kind = PageKind.Tweaks, string group = "")
     {
         Title = title;
         Blurb = blurb;
         Tweaks = tweaks;
         Kind = kind;
-        Tweaks.CollectionChanged += (_, _) => Raise(nameof(ShowsEmptyGames), nameof(CountText));
+        Group = group;
+        Tweaks.CollectionChanged += (_, _) => Raise(nameof(ShowsEmptyGames), nameof(CountText), nameof(SummaryText));
     }
 
     public string Title { get; }
+
+    /// <summary>The heading this page sits under in the sidebar. Empty for "All tweaks", which has none.</summary>
+    public string Group { get; }
+
+    /// <summary>"All tweaks" lists every category, so its tweaks come under a heading per category.</summary>
+    public bool GroupByCategory { get; init; }
+
+    // Each list is bound only on the page that uses it, so a page never builds its rows twice.
+    public ObservableCollection<TweakViewModel>? FlatTweaks => GroupByCategory ? null : Tweaks;
+
+    public ICollectionView? GroupedTweaks
+    {
+        get
+        {
+            if (!GroupByCategory) return null;
+            if (_grouped is null)
+            {
+                _grouped = new CollectionViewSource { Source = Tweaks }.View;
+                _grouped.GroupDescriptions.Add(new PropertyGroupDescription(nameof(TweakViewModel.CategoryTitle)));
+            }
+            return _grouped;
+        }
+    }
     public string Blurb { get; }
     public ObservableCollection<TweakViewModel> Tweaks { get; }
     public PageKind Kind { get; }
@@ -52,14 +80,42 @@ public sealed class CategoryViewModel : ObservableObject
         }
     }
 
-    public void RefreshCount() => Raise(nameof(CountText));
+    /// <summary>"10 of 15 on", for the page header. Empty when no tweak reports a state.</summary>
+    public string SummaryText
+    {
+        get
+        {
+            var tracked = Tweaks.Count(t => t.HasStatus);
+            return tracked == 0 ? "" : $"{Tweaks.Count(t => t.Status == TweakStatus.Applied)} of {tracked} on";
+        }
+    }
+
+    public void RefreshCount() => Raise(nameof(CountText), nameof(SummaryText));
 }
 
 public sealed class MainViewModel : ObservableObject
 {
     private const string RestorePointId = "restore-point";
 
-    private static readonly Dictionary<TweakCategory, (string Title, string Blurb)> CategoryText = new()
+    /// <summary>The order of the pages in the sidebar, and the heading each sits under.</summary>
+    private static readonly (TweakCategory Category, string Group)[] Layout =
+    {
+        (TweakCategory.Gaming, "Performance"),
+        (TweakCategory.GameProfiles, "Performance"),
+        (TweakCategory.Power, "Performance"),
+        (TweakCategory.Network, "Performance"),
+        (TweakCategory.Startup, "Performance"),
+        (TweakCategory.Updates, "Windows"),
+        (TweakCategory.Appearance, "Windows"),
+        (TweakCategory.Language, "Windows"),
+        (TweakCategory.System, "Windows"),
+        (TweakCategory.AI, "Privacy"),
+        (TweakCategory.Privacy, "Privacy"),
+    };
+
+    private static int LayoutIndex(TweakCategory category) => Array.FindIndex(Layout, l => l.Category == category);
+
+    internal static readonly Dictionary<TweakCategory, (string Title, string Blurb)> CategoryText = new()
     {
         [TweakCategory.Updates] = ("Updates", "Control when and what Windows Update installs."),
         [TweakCategory.Power] = ("Power", "Steady performance, without the PC turning off the screen or sleeping mid-game."),
@@ -102,8 +158,9 @@ public sealed class MainViewModel : ObservableObject
 
         // Ask once whether each tweak applies to this PC; the ones that don't are kept to be listed with their reason.
         var availability = engine.Tweaks.Select(t => (Tweak: t, Available: t.IsAvailable())).ToList();
+        // In sidebar order, so "All tweaks" reads category by category.
         AllTweaks = new ObservableCollection<TweakViewModel>(
-            availability.Where(a => a.Available).Select(a => new TweakViewModel(a.Tweak, this)));
+            availability.Where(a => a.Available).Select(a => new TweakViewModel(a.Tweak, this)).OrderBy(t => LayoutIndex(t.Category)));
         var unavailableTweaks = availability.Where(a => !a.Available && a.Tweak.UnavailableReason is not null)
             .Select(a => new TweakViewModel(a.Tweak, this, unavailable: true))
             .ToList();
@@ -113,20 +170,20 @@ public sealed class MainViewModel : ObservableObject
         Measure = new MeasureViewModel(context);
         _games = new GameLibrary(context.DataRoot);
 
-        Categories.Add(new CategoryViewModel("All tweaks", "Everything the app can change, in category order.", AllTweaks));
+        Categories.Add(new CategoryViewModel("All tweaks", "Everything the app can change, grouped by category.", AllTweaks) { GroupByCategory = true });
         Categories.Add(new CategoryViewModel("PC health check",
-            "Looks for what costs the most performance and no tweak can fix: refresh rate, memory speed, drivers, drives.", new(), PageKind.Health));
+            "Looks for what costs the most performance and no tweak can fix: refresh rate, memory speed, drivers, drives.", new(), PageKind.Health, "Check"));
         Categories.Add(new CategoryViewModel("Before and after",
-            "Take a snapshot, apply tweaks, take another and see what really changed.", new(), PageKind.Measure));
+            "Take a snapshot, apply tweaks, take another and see what really changed.", new(), PageKind.Measure, "Check"));
 
-        // Categories follow the enum order. "Your games" is always listed, even when empty, so there is a place to add one.
-        foreach (var category in Enum.GetValues<TweakCategory>())
+        // "Your games" is always listed, even when empty, so there is a place to add one.
+        foreach (var (category, group) in Layout)
         {
             var tweaks = new ObservableCollection<TweakViewModel>(AllTweaks.Where(t => t.Category == category));
             if (tweaks.Count == 0 && category != TweakCategory.GameProfiles) continue;
 
             var (title, blurb) = CategoryText[category];
-            var page = new CategoryViewModel(title, blurb, tweaks, category == TweakCategory.GameProfiles ? PageKind.Games : PageKind.Tweaks)
+            var page = new CategoryViewModel(title, blurb, tweaks, category == TweakCategory.GameProfiles ? PageKind.Games : PageKind.Tweaks, group)
             {
                 ShowsAiApps = category == TweakCategory.AI,
             };
@@ -138,10 +195,14 @@ public sealed class MainViewModel : ObservableObject
         foreach (var group in unavailableTweaks.GroupBy(t => t.Category).Where(g => Categories.All(c => c.ShowsTweaks == false || c.Title != CategoryText[g.Key].Title)))
         {
             var (title, blurb) = CategoryText[group.Key];
-            var page = new CategoryViewModel(title, blurb, new ObservableCollection<TweakViewModel>());
+            var page = new CategoryViewModel(title, blurb, new ObservableCollection<TweakViewModel>(), PageKind.Tweaks, Layout[LayoutIndex(group.Key)].Group);
             foreach (var tweak in group) page.Unavailable.Add(tweak);
             Categories.Add(page);
         }
+
+        // The sidebar lists the pages under their headings.
+        CategoriesView = CollectionViewSource.GetDefaultView(Categories);
+        CategoriesView.GroupDescriptions.Add(new PropertyGroupDescription(nameof(CategoryViewModel.Group)));
 
         RestartExplorerCommand = new AsyncCommand(RestartExplorerAsync);
         DismissExplorerCommand = new AsyncCommand(() =>
@@ -255,6 +316,7 @@ public sealed class MainViewModel : ObservableObject
         await LoadAiAppsAsync();
     }
     public ObservableCollection<CategoryViewModel> Categories { get; } = new();
+    public ICollectionView CategoriesView { get; }
     public bool IsAdmin { get; }
     public bool ShowAdminBanner => !IsAdmin;
 

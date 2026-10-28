@@ -136,8 +136,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
 
       # Only this version's files: the download above also left the previous full package in the folder.
-      # The pack id is also the install folder (%LocalAppData%\plastina.WindowsOptimizer), kept apart from the
-      # app's own settings folder. Setup and the zip get shorter names; the updater only reads the .nupkg names.
+      # The pack id is only the internal name; the wizard suggests %LocalAppData%\Programs\Windows Optimizer,
+      # kept apart from the app's own settings folder. Setup and the zip get shorter names; the updater only reads the .nupkg names.
       # No checksum files: GitHub shows each asset's SHA-256 on the release page and in the API, and
       # tools/Update-Packaging.ps1 reads the hashes for Scoop and winget from there.
       - name: List the release files

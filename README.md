@@ -29,7 +29,7 @@ The app needs to run as administrator (the Release build asks for that by itself
 
 ## Install
 
-**Installer**: get `WindowsOptimizer-win-Setup.exe` from the [Releases](../../releases) page and run it. A wizard lets you choose the install folder (default `%LocalAppData%\plastina.WindowsOptimizer`); it installs for your account only, needs no admin rights and no .NET, and adds Start menu and desktop shortcuts. `/SILENT` and `/DIR="path"` work for unattended installs. Uninstall it from Settings > Apps. GitHub shows the SHA-256 of each file on the Releases page if you want to verify the download.
+**Installer**: get `WindowsOptimizer-win-Setup.exe` from the [Releases](../../releases) page and run it. A wizard lets you choose the install folder (default `%LocalAppData%\Programs\Windows Optimizer`); it installs for your account only, needs no admin rights and no .NET, and adds Start menu and desktop shortcuts. `/SILENT` and `/DIR="path"` work for unattended installs. Uninstall it from Settings > Apps. GitHub shows the SHA-256 of each file on the Releases page if you want to verify the download.
 
 **Updates install themselves**: each time the app opens it checks GitHub, downloads a newer version in the background and installs it when you close the app (or right away with **Restart now** on the banner). Only the files that changed are downloaded.
 

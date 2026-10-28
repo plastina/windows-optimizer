@@ -22,8 +22,9 @@ AppName=Windows Optimizer
 AppVersion={#AppVersion}
 AppPublisher=plastina
 AppPublisherURL=https://github.com/plastina/windows-optimizer
-; Same folder the Velopack-only installer used, so people upgrading from it land in the same place.
-DefaultDirName={localappdata}\plastina.WindowsOptimizer
+; Chosen in DefaultDir below. It stays out of %LocalAppData%\WindowsOptimizer, where the app keeps its settings and
+; undo backups, because uninstalling removes the whole install folder.
+DefaultDirName={code:DefaultDir}
 DisableProgramGroupPage=yes
 DisableDirPage=no
 DisableReadyPage=no
@@ -54,6 +55,20 @@ Filename: "{tmp}\VelopackSetup.exe"; Parameters: "--silent --installto ""{app}""
 ; The "Run Windows Optimizer" checkbox on the last page.
 Filename: "{app}\current\WindowsOptimizer.exe"; Description: "{cm:LaunchProgram,Windows Optimizer}"; \
   Flags: nowait postinstall skipifsilent
+
+[Code]
+{ The folder suggested on the install folder page. Copies installed by the Velopack-only installer live in
+  "plastina.WindowsOptimizer" (the package id); people updating from one keep landing there instead of getting a second copy. }
+function DefaultDir(Param: String): String;
+var
+  Legacy: String;
+begin
+  Legacy := ExpandConstant('{localappdata}\plastina.WindowsOptimizer');
+  if DirExists(Legacy) then
+    Result := Legacy
+  else
+    Result := ExpandConstant('{localappdata}\Programs\Windows Optimizer');
+end;
 
 [CustomMessages]
 brazilianportuguese.Installing=Instalando o Windows Optimizer...

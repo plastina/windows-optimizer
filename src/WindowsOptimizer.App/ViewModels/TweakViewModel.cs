@@ -37,6 +37,7 @@ public sealed class TweakViewModel : ObservableObject
     public string Name => _tweak.Name;
     public string Description => _tweak.Description;
     public TweakCategory Category => _tweak.Category;
+    public string CategoryTitle => MainViewModel.CategoryText[Category].Title;
     public RiskLevel Risk => _tweak.Risk;
     public string? Warning => _tweak.Warning;
     public bool HasWarning => !string.IsNullOrEmpty(_tweak.Warning);

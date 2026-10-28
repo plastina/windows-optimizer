@@ -40,6 +40,10 @@ public partial class MainWindow : Window
         if (!App.DemoUpdate) await ViewModel.CheckForUpdateAsync();
     }
 
+    private void OnSettingsClick(object sender, RoutedEventArgs e) => SettingsPopup.IsOpen = true;
+
+    private void OnSettingsActionClick(object sender, RoutedEventArgs e) => SettingsPopup.IsOpen = false;
+
     private void OnLogChanged(object sender, TextChangedEventArgs e) => ((TextBox)sender).ScrollToEnd();
 
     private async Task CaptureAsync(string path)
