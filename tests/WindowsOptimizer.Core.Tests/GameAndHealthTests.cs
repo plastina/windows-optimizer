@@ -313,7 +313,7 @@ public sealed class NewTweakTests : IDisposable
     {
         var all = TweakCatalog.Create(_env.Context);
 
-        foreach (var id in new[] { "memory-integrity-off", "hypervisor-off" })
+        foreach (var id in new[] { "memory-integrity-off", "hypervisor-off", "defender-realtime-off" })
         {
             var tweak = all.Single(t => t.Id == id);
             Assert.Equal(RiskLevel.High, tweak.Risk);

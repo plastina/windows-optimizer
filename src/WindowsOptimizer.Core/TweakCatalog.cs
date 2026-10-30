@@ -20,6 +20,7 @@ public static class TweakCatalog
     private const string AppCompat = @"SOFTWARE\Policies\Microsoft\Windows\AppCompat";
     private const string ErrorReportingPolicy = @"SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting";
     private const string NvidiaPanel = @"Software\NVIDIA Corporation\NvControlPanel2\Client";
+    private const string DefenderRtpPolicy = @"SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection";
 
     // Low risk, a clear benefit for most people, and nothing lost by turning them on.
     private static readonly HashSet<string> RecommendedIds = new()
@@ -599,6 +600,17 @@ public static class TweakCatalog
         {
             NeedsRestart = true,
             Warning = "Memory integrity protects Windows against malware that targets the kernel and against vulnerable drivers. With it off, a bad driver can take over the PC. Leave it on unless you measured a real loss in your games, and turn it back on with Undo.",
+        },
+        new RegistryTweak(c, "defender-realtime-off", "Turn off Microsoft Defender real-time protection",
+            "Stops the Antimalware Service Executable (MsMpEng) from scanning files and behavior in the background, by setting the real-time protection Group Policy switches. It frees the CPU and memory that constant scanning uses.",
+            TweakCategory.System, RiskLevel.High,
+            Reg.LmDword(DefenderRtpPolicy, "DisableRealtimeMonitoring", 1),
+            Reg.LmDword(DefenderRtpPolicy, "DisableBehaviorMonitoring", 1),
+            Reg.LmDword(DefenderRtpPolicy, "DisableOnAccessProtection", 1),
+            Reg.LmDword(DefenderRtpPolicy, "DisableScanOnRealtimeEnable", 1))
+        {
+            NeedsRestart = true,
+            Warning = "This leaves the PC with no real-time malware protection. It only takes effect if you first turn Tamper Protection off by hand in Windows Security (Virus & threat protection → Manage settings) — no app can turn Tamper Protection off for you. While Tamper Protection is on, Windows ignores these switches and keeps protection running. Undo clears them; if Microsoft Defender Antivirus is your only antivirus, leave it on.",
         },
         SecurityTradeoffTweaks.HypervisorOff(c),
     };
