@@ -67,6 +67,12 @@ public partial class App : Application
         ThemeManager.UseDarkTitleBar(window, ThemeManager.IsDark(settings.Theme));
     }
 
+    protected override void OnExit(ExitEventArgs e)
+    {
+        UpdateChecker.ApplyOnExit();
+        base.OnExit(e);
+    }
+
     /// <summary>
     /// Applies and undoes every tweak for real and writes a report. Only run this on a disposable machine
     /// (Windows Sandbox, a VM): <c>WindowsOptimizer.exe --selftest report.md</c>. Returns the number of failures.

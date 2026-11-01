@@ -4,6 +4,7 @@
         xmlns:core="clr-namespace:WindowsOptimizer.Core;assembly=WindowsOptimizer.Core"
         xmlns:vm="clr-namespace:WindowsOptimizer.App.ViewModels"
         Title="Windows Optimizer" Width="1180" Height="780" MinWidth="900" MinHeight="600"
+        WindowStartupLocation="CenterScreen"
         Background="{DynamicResource PaperBrush}" Foreground="{DynamicResource InkBrush}"
         FontFamily="{StaticResource BodyFont}" FontSize="13" UseLayoutRounding="True"
         Loaded="OnLoaded">

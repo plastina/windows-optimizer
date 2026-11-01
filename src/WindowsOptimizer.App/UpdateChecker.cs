@@ -43,7 +43,28 @@ public static class UpdateChecker
     /// <summary>Closes the app, installs the downloaded update and opens the new version.</summary>
     public static void RestartToUpdate()
     {
-        if (_manager is not null && _pending is not null) _manager.ApplyUpdatesAndRestart(_pending.TargetFullRelease);
+        if (_manager is null || _pending is null) return;
+        var release = _pending.TargetFullRelease;
+        _pending = null;
+        _manager.ApplyUpdatesAndRestart(release);
+    }
+
+    /// <summary>
+    /// Called when the app closes. If the user never clicked "Restart now", the downloaded update is installed
+    /// quietly once this process is gone. Registering this waiter only at exit matters: a second updater started
+    /// earlier would race the one from <see cref="RestartToUpdate"/> and install without reopening the app.
+    /// </summary>
+    public static void ApplyOnExit()
+    {
+        if (_manager is null || _pending is null) return;
+        try
+        {
+            _manager.WaitExitThenApplyUpdates(_pending.TargetFullRelease, silent: true, restart: false);
+        }
+        catch (Exception)
+        {
+            // Velopack applies it on the next start instead.
+        }
     }
 
     private static async Task<ReleaseInfo?> DownloadAsync(UpdateManager manager)
@@ -54,8 +75,6 @@ public static class UpdateChecker
             if (update is null) return null;
 
             await manager.DownloadUpdatesAsync(update);
-            // If the user never clicks "Restart now", the update is installed quietly when the app closes.
-            manager.WaitExitThenApplyUpdates(update.TargetFullRelease, silent: true, restart: false);
 
             _manager = manager;
             _pending = update;
