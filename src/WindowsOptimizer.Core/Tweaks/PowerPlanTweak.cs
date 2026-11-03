@@ -5,7 +5,7 @@ namespace WindowsOptimizer.Core;
 
 /// <summary>
 /// Switches to the Ultimate Performance plan (falling back to High performance), stops the sleep and
-/// hibernate timers on AC power and lets the screen turn off after 30 idle minutes. Undo restores the
+/// hibernate timers on AC power and lets the screen turn off after 15 idle minutes. Undo restores the
 /// previous plan and the timers.
 /// </summary>
 public sealed class PowerPlanTweak : TweakBase
@@ -18,7 +18,7 @@ public sealed class PowerPlanTweak : TweakBase
     private static readonly Regex MaxPlanName = new("Ultimate|Máxim|Maxim", RegexOptions.IgnoreCase);
     private static readonly Regex HexValue = new("0x[0-9a-fA-F]{8}");
 
-    private const int MonitorIdleSeconds = 30 * 60;
+    private const int MonitorIdleSeconds = 15 * 60;
 
     // Aliases work on every Windows language; the Key is how the value is stored in the snapshot.
     // AcValue is what Apply sets on AC power (seconds for the idle timers, 0 meaning never).
@@ -32,7 +32,7 @@ public sealed class PowerPlanTweak : TweakBase
 
     public PowerPlanTweak(TweakContext ctx)
         : base(ctx, "power-plan-max", "Ultimate Performance power plan",
-            "Turns on the highest-performance plan and keeps sleep and hibernation from turning the PC off while it is plugged in. The screen still turns off after 30 idle minutes.",
+            "Turns on the highest-performance plan and keeps sleep and hibernation from turning the PC off while it is plugged in. The screen still turns off after 15 idle minutes.",
             TweakCategory.Power, RiskLevel.Low)
     {
         NeedsAdmin = true;
@@ -64,7 +64,7 @@ public sealed class PowerPlanTweak : TweakBase
     {
         new PreviewLine("Active power plan", GetActive()?.Name ?? "—", "Ultimate Performance"),
         new PreviewLine("Sleep and hibernate (plugged in)", "—", "Never"),
-        new PreviewLine("Turn off screen (plugged in)", "—", "After 30 minutes"),
+        new PreviewLine("Turn off screen (plugged in)", "—", "After 15 minutes"),
         new PreviewLine("Automatic console lock", "—", "Off"),
     };
 
