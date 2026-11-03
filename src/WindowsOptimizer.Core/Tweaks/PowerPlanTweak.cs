@@ -4,8 +4,9 @@ using System.Text.RegularExpressions;
 namespace WindowsOptimizer.Core;
 
 /// <summary>
-/// Switches to the Ultimate Performance plan (falling back to High performance) and stops the screen,
-/// sleep and hibernate timers on AC power. Undo restores the previous plan and the timers.
+/// Switches to the Ultimate Performance plan (falling back to High performance), stops the sleep and
+/// hibernate timers on AC power and lets the screen turn off after 30 idle minutes. Undo restores the
+/// previous plan and the timers.
 /// </summary>
 public sealed class PowerPlanTweak : TweakBase
 {
@@ -17,18 +18,21 @@ public sealed class PowerPlanTweak : TweakBase
     private static readonly Regex MaxPlanName = new("Ultimate|Máxim|Maxim", RegexOptions.IgnoreCase);
     private static readonly Regex HexValue = new("0x[0-9a-fA-F]{8}");
 
+    private const int MonitorIdleSeconds = 30 * 60;
+
     // Aliases work on every Windows language; the Key is how the value is stored in the snapshot.
-    private static readonly (string Key, string SubGroup, string Setting)[] Timers =
+    // AcValue is what Apply sets on AC power (seconds for the idle timers, 0 meaning never).
+    private static readonly (string Key, string SubGroup, string Setting, int AcValue)[] Timers =
     {
-        ("monitor", "SUB_VIDEO", "VIDEOIDLE"),
-        ("standby", "SUB_SLEEP", "STANDBYIDLE"),
-        ("hibernate", "SUB_SLEEP", "HIBERNATEIDLE"),
-        ("consolelock", "SUB_NONE", "CONSOLELOCK"),
+        ("monitor", "SUB_VIDEO", "VIDEOIDLE", MonitorIdleSeconds),
+        ("standby", "SUB_SLEEP", "STANDBYIDLE", 0),
+        ("hibernate", "SUB_SLEEP", "HIBERNATEIDLE", 0),
+        ("consolelock", "SUB_NONE", "CONSOLELOCK", 0),
     };
 
     public PowerPlanTweak(TweakContext ctx)
         : base(ctx, "power-plan-max", "Ultimate Performance power plan",
-            "Turns on the highest-performance plan and keeps the screen, sleep and hibernation from turning the PC off while it is plugged in.",
+            "Turns on the highest-performance plan and keeps sleep and hibernation from turning the PC off while it is plugged in. The screen still turns off after 30 idle minutes.",
             TweakCategory.Power, RiskLevel.Low)
     {
         NeedsAdmin = true;
@@ -48,7 +52,7 @@ public sealed class PowerPlanTweak : TweakBase
         if (active is null) return null;
 
         var parts = new List<string> { active.Value.Guid };
-        foreach (var (key, subGroup, setting) in Timers)
+        foreach (var (key, subGroup, setting, _) in Timers)
         {
             var hex = HexValue.Matches(Ctx.Runner.Run("powercfg", $"/query {active.Value.Guid} {subGroup} {setting}").Output);
             parts.Add($"{key}={(hex.Count >= 2 ? hex[^2].Value + "/" + hex[^1].Value : "?")}");
@@ -59,7 +63,8 @@ public sealed class PowerPlanTweak : TweakBase
     public override IReadOnlyList<PreviewLine> Preview() => new[]
     {
         new PreviewLine("Active power plan", GetActive()?.Name ?? "—", "Ultimate Performance"),
-        new PreviewLine("Turn off screen, sleep and hibernate (plugged in)", "—", "Never"),
+        new PreviewLine("Sleep and hibernate (plugged in)", "—", "Never"),
+        new PreviewLine("Turn off screen (plugged in)", "—", "After 30 minutes"),
         new PreviewLine("Automatic console lock", "—", "Off"),
     };
 
@@ -99,8 +104,8 @@ public sealed class PowerPlanTweak : TweakBase
         }
 
         Run($"/setactive {target}");
-        foreach (var (_, subGroup, setting) in Timers)
-            Run($"/setacvalueindex {target} {subGroup} {setting} 0");
+        foreach (var (_, subGroup, setting, acValue) in Timers)
+            Run($"/setacvalueindex {target} {subGroup} {setting} {acValue}");
         Run($"/setdcvalueindex {target} SUB_NONE CONSOLELOCK 0");
         Run($"/setactive {target}");
 
@@ -121,7 +126,7 @@ public sealed class PowerPlanTweak : TweakBase
         // A scheme we duplicated is deleted below, so only restore timers on a scheme that was already there.
         if (target is not null && !created && SchemeExists(target))
         {
-            foreach (var (key, subGroup, setting) in Timers)
+            foreach (var (key, subGroup, setting, _) in Timers)
             {
                 if (snapshot.Data.TryGetValue("ac:" + key, out var ac))
                     Ctx.Runner.Run("powercfg", $"/setacvalueindex {target} {subGroup} {setting} {ac}");
@@ -171,7 +176,7 @@ public sealed class PowerPlanTweak : TweakBase
 
     private void CaptureTimers(TweakSnapshot snapshot, string scheme)
     {
-        foreach (var (key, subGroup, setting) in Timers)
+        foreach (var (key, subGroup, setting, _) in Timers)
         {
             var result = Ctx.Runner.Run("powercfg", $"/query {scheme} {subGroup} {setting}");
             if (!result.Success) continue;
